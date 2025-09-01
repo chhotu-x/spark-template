@@ -1,4 +1,4 @@
-import { Link, BarChart3, FolderOpen, PenTool, User, Home, Globe } from '@phosphor-icons/react'
+import { PenTool, User, Home, Globe } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -11,14 +11,10 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  const [links] = useKV<any[]>('shortened-links', [])
   const [posts] = useKV<any[]>('blog-posts', [])
 
   const menuItems = [
     { id: 'dashboard' as Page, label: 'Dashboard', icon: Home },
-    { id: 'shorten' as Page, label: 'Shorten URL', icon: Link },
-    { id: 'links' as Page, label: 'My Links', icon: FolderOpen, badge: links.length },
-    { id: 'analytics' as Page, label: 'Analytics', icon: BarChart3 },
   ]
 
   const blogItems = [
@@ -35,11 +31,11 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Link size={20} className="text-primary-foreground" />
+            <PenTool size={20} className="text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground">LinkCraft</h1>
-            <p className="text-xs text-muted-foreground">URL & Content Platform</p>
+            <h1 className="text-lg font-bold text-foreground">BlogCraft</h1>
+            <p className="text-xs text-muted-foreground">Content Platform</p>
           </div>
         </div>
       </div>
@@ -107,7 +103,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       <div className="p-4 border-t border-border">
         <div className="text-xs text-muted-foreground text-center">
-          Built with LinkCraft Platform
+          Built with BlogCraft Platform
         </div>
       </div>
     </div>

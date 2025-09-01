@@ -2,9 +2,6 @@ import { useState } from 'react'
 import { toast, Toaster } from 'sonner'
 import Sidebar from '@/components/layout/Sidebar'
 import Dashboard from '@/components/pages/Dashboard'
-import URLShortener from '@/components/pages/URLShortener'
-import LinkManager from '@/components/pages/LinkManager'
-import Analytics from '@/components/pages/Analytics'
 import BlogManager from '@/components/pages/BlogManager'
 import BlogPost from '@/components/pages/BlogPost'
 import Profile from '@/components/pages/Profile'
@@ -12,7 +9,7 @@ import PublicBlog from '@/components/pages/PublicBlog'
 import { Menu, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 
-export type Page = 'dashboard' | 'shorten' | 'links' | 'analytics' | 'blog' | 'blog-post' | 'profile' | 'public-blog'
+export type Page = 'dashboard' | 'blog' | 'blog-post' | 'profile' | 'public-blog'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
@@ -32,12 +29,6 @@ function App() {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard onNavigate={handleNavigate} />
-      case 'shorten':
-        return <URLShortener />
-      case 'links':
-        return <LinkManager />
-      case 'analytics':
-        return <Analytics />
       case 'blog':
         return <BlogManager onNavigate={handleNavigate} />
       case 'blog-post':
@@ -85,7 +76,7 @@ function App() {
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <div className="w-3 h-3 bg-primary-foreground rounded-sm" />
             </div>
-            <span className="font-semibold text-foreground">LinkCraft</span>
+            <span className="font-semibold text-foreground">BlogCraft</span>
           </div>
           <div className="w-8" /> {/* Spacer for centering */}
         </div>
