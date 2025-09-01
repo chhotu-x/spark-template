@@ -138,7 +138,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
   if (!postId || !currentPost) {
     return (
       <div className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="text-center py-12">
             <BookOpen size={48} className="text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Post not found</h3>
@@ -157,13 +157,14 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-4 lg:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => onNavigate('blog')}
+              className="self-start"
             >
               <ArrowLeft size={16} className="mr-2" />
               Back to Posts
@@ -176,19 +177,19 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={sharePost}>
+            <Button variant="outline" onClick={sharePost} size="sm">
               <Share size={16} className="mr-2" />
               Share
             </Button>
-            <Button onClick={() => savePost(true)}>
+            <Button onClick={() => savePost(true)} size="sm">
               <FloppyDisk size={16} className="mr-2" />
               Save
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+          <div className="xl:col-span-2 space-y-4 lg:space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Content Editor</CardTitle>

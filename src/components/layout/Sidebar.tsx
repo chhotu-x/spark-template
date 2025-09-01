@@ -31,7 +31,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   ]
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col">
+    <div className="w-64 bg-card border-r border-border flex flex-col h-full">
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">

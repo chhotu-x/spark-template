@@ -81,21 +81,21 @@ export default function Analytics() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Analytics</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Analytics</h1>
             <p className="text-muted-foreground">
               Track performance and gain insights from your shortened links.
             </p>
           </div>
-          <Button onClick={exportData} variant="outline">
+          <Button onClick={exportData} variant="outline" className="self-start sm:self-auto">
             <Download size={16} className="mr-2" />
             Export Data
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
@@ -153,16 +153,18 @@ export default function Analytics() {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="geography">Geography</TabsTrigger>
-            <TabsTrigger value="referrers">Referrers</TabsTrigger>
-            <TabsTrigger value="top-links">Top Links</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="overview" className="space-y-4 lg:space-y-6">
+          <div className="overflow-x-auto">
+            <TabsList className="grid grid-cols-4 w-full min-w-[400px]">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="geography">Geography</TabsTrigger>
+              <TabsTrigger value="referrers">Referrers</TabsTrigger>
+              <TabsTrigger value="top-links">Top Links</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Daily Clicks</CardTitle>

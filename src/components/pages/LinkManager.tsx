@@ -83,15 +83,15 @@ export default function LinkManager() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Link Manager</h1>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Link Manager</h1>
           <p className="text-muted-foreground">
             Manage and track all your shortened URLs in one place.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Links</CardTitle>
@@ -157,8 +157,9 @@ export default function LinkManager() {
             </div>
 
             {filteredLinks.length > 0 ? (
-              <div className="rounded-md border">
-                <Table>
+              <div className="overflow-x-auto">
+                <div className="rounded-md border min-w-[800px]">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Link</TableHead>
@@ -281,6 +282,7 @@ export default function LinkManager() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12">

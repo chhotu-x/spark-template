@@ -62,8 +62,8 @@ export default function PublicBlog({ onNavigate }: PublicBlogProps) {
   if (selectedPost) {
     return (
       <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-8">
-          <div className="mb-8">
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 lg:mb-8">
             <Button 
               variant="ghost" 
               onClick={() => setSelectedPost(null)}
@@ -73,13 +73,13 @@ export default function PublicBlog({ onNavigate }: PublicBlogProps) {
               Back to Blog
             </Button>
             
-            <article className="space-y-6">
+            <article className="space-y-4 lg:space-y-6">
               <header className="space-y-4">
-                <h1 className="text-4xl font-bold text-foreground leading-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
                   {selectedPost.title}
                 </h1>
                 
-                <div className="flex items-center gap-4 text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-muted-foreground text-sm sm:text-base">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} />
                     <span>{formatDate(selectedPost.publishedAt || selectedPost.createdAt)}</span>
@@ -155,15 +155,15 @@ export default function PublicBlog({ onNavigate }: PublicBlogProps) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="max-w-6xl mx-auto p-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Globe size={24} className="text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                   {profile?.name ? `${profile.name}'s Blog` : 'LinkCraft Blog'}
                 </h1>
                 <p className="text-muted-foreground">
@@ -171,7 +171,7 @@ export default function PublicBlog({ onNavigate }: PublicBlogProps) {
                 </p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => onNavigate('blog')}>
+            <Button variant="outline" onClick={() => onNavigate('blog')} className="self-start lg:self-auto">
               Manage Blog
             </Button>
           </div>
@@ -209,7 +209,7 @@ export default function PublicBlog({ onNavigate }: PublicBlogProps) {
         </div>
 
         {filteredPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
             {filteredPosts.map((post) => (
               <Card 
                 key={post.id} 

@@ -112,21 +112,21 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Blog Manager</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Blog Manager</h1>
             <p className="text-muted-foreground">
               Create, edit, and manage your blog content.
             </p>
           </div>
-          <Button onClick={createNewPost} className="gap-2">
+          <Button onClick={createNewPost} className="gap-2 self-start sm:self-auto">
             <Plus size={16} />
             New Post
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -189,7 +189,7 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="relative flex-1 max-w-sm">
                   <MagnifyingGlass size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -200,7 +200,7 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                   />
                 </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList>
+                  <TabsList className="grid w-full grid-cols-3 sm:w-auto">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="published">Published</TabsTrigger>
                     <TabsTrigger value="draft">Drafts</TabsTrigger>
@@ -209,8 +209,9 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
               </div>
 
               {filteredPosts.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
+                <div className="overflow-x-auto">
+                  <div className="rounded-md border min-w-[700px]">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Title</TableHead>
@@ -318,6 +319,7 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">

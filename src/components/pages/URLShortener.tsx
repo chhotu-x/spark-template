@@ -165,15 +165,15 @@ export default function URLShortener() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">URL Shortener</h1>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">URL Shortener</h1>
           <p className="text-muted-foreground">
             Create short, memorable links with advanced features and tracking.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -200,8 +200,8 @@ export default function URLShortener() {
 
                 <div className="space-y-2">
                   <Label htmlFor="custom-alias">Custom Alias (optional)</Label>
-                  <div className="flex">
-                    <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md">
+                  <div className="flex flex-col sm:flex-row">
+                    <div className="flex items-center px-3 bg-muted border border-b-0 sm:border-b sm:border-r-0 rounded-t-md sm:rounded-l-md sm:rounded-t-none">
                       <span className="text-sm text-muted-foreground">linkcraft.app/</span>
                     </div>
                     <Input
@@ -209,12 +209,12 @@ export default function URLShortener() {
                       placeholder="my-link"
                       value={customAlias}
                       onChange={(e) => setCustomAlias(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-                      className="rounded-l-none"
+                      className="rounded-b-md sm:rounded-l-none sm:rounded-b-md"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Title (optional)</Label>
                     <Input
