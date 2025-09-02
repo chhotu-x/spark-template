@@ -24,16 +24,21 @@ export function useScheduledPosts() {
 
   useEffect(() => {
     const checkScheduledPosts = () => {
-      const now = new Date()
-      const postsToPublish = posts.filter(post => 
-        post.status === 'scheduled' && 
-        post.scheduledAt && 
-        new Date(post.scheduledAt) <= now
-      )
+      setPosts(currentPosts => {
+        const now = new Date()
+        const postsToPublish = currentPosts.filter(post => 
+          post.status === 'scheduled' && 
+          post.scheduledAt && 
+          new Date(post.scheduledAt) <= now
+        )
 
-      if (postsToPublish.length > 0) {
-        setPosts(currentPosts => 
-          currentPosts.map(post => {
+        if (postsToPublish.length > 0) {
+          // Show notifications for published posts
+          postsToPublish.forEach(post => {
+            toast.success(`"${post.title}" has been published!`)
+          })
+
+          return currentPosts.map(post => {
             if (postsToPublish.some(p => p.id === post.id)) {
               return {
                 ...post,
@@ -44,13 +49,10 @@ export function useScheduledPosts() {
             }
             return post
           })
-        )
+        }
 
-        // Show notifications for published posts
-        postsToPublish.forEach(post => {
-          toast.success(`"${post.title}" has been published!`)
-        })
-      }
+        return currentPosts
+      })
     }
 
     // Check immediately
@@ -60,7 +62,7 @@ export function useScheduledPosts() {
     const interval = setInterval(checkScheduledPosts, 60000)
 
     return () => clearInterval(interval)
-  }, [posts, setPosts])
+  }, [setPosts])
 
   return null
 }
