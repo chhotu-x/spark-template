@@ -1,110 +1,97 @@
-import { PenTool, User, Home, Globe, ChartBar } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { useKV } from '@github/spark/hooks'
-import type { Page } from '@/App'
+import React, { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import {
+  Home,
+  Users,
+  Settings,
+  BarChart,
+  Bell,
+  LogOut,
+  Menu,
+  X,
+  User,
+} from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 
-interface SidebarProps {
-  currentPage: Page
-  onNavigate: (page: Page) => void
+interface NavItem {
+  path: string
+  label: string
+  icon: React.ReactNode
 }
 
-export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
-  const [posts] = useKV<any[]>('blog-posts', [])
+export const Sidebar: React.FC = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
-  const menuItems = [
-    { id: 'dashboard' as Page, label: 'Dashboard', icon: Home },
+  const navItems: NavItem[] = [
+    { path: '/dashboard', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
+    { path: '/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
+    { path: '/reports', label: 'Reports', icon: <BarChart className="h-5 w-5" /> },
+    { path: '/notifications', label: 'Notifications', icon: <Bell className="h-5 w-5" /> },
+    { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
   ]
 
-  const blogItems = [
-    { id: 'blog' as Page, label: 'Blog Manager', icon: PenTool, badge: posts.length },
-    { id: 'public-blog' as Page, label: 'Public Blog', icon: Globe },
-    { id: 'analytics' as Page, label: 'Analytics', icon: ChartBar },
-  ]
-
-  const profileItems = [
-    { id: 'profile' as Page, label: 'Profile', icon: User },
-  ]
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
-    <div className="w-64 bg-card border-r border-border flex flex-col h-full">
-      <div className="p-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <PenTool size={20} className="text-primary-foreground" />
+    <div
+      className={`bg-gray-800 text-white h-screen transition-all duration-300 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <div className={`flex items-center space-x-3 ${isCollapsed ? 'hidden' : ''}`}>
+            <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+              <User className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="font-semibold">{user?.name || 'Admin User'}</p>
+              <p className="text-xs text-gray-400">{user?.role || 'Administrator'}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">BlogCraft</h1>
-            <p className="text-xs text-muted-foreground">Content Platform</p>
-          </div>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 hover:bg-gray-700 rounded"
+          >
+            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          </button>
         </div>
-      </div>
 
-      <nav className="flex-1 px-4 pb-4 space-y-1">
-        <div className="space-y-1">
-          {menuItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={currentPage === item.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-3 h-10"
-              onClick={() => onNavigate(item.id)}
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-indigo-600 text-white'
+                    : 'hover:bg-gray-700 text-gray-300'
+                }`
+              }
             >
-              <item.icon size={18} />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {item.badge}
-                </Badge>
-              )}
-            </Button>
+              {item.icon}
+              {!isCollapsed && <span>{item.label}</span>}
+            </NavLink>
           ))}
-        </div>
+        </nav>
 
-        <Separator className="my-4" />
-
-        <div className="space-y-1">
-          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Content
-          </h3>
-          {blogItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={currentPage === item.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-3 h-10"
-              onClick={() => onNavigate(item.id)}
-            >
-              <item.icon size={18} />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {item.badge}
-                </Badge>
-              )}
-            </Button>
-          ))}
-        </div>
-
-        <Separator className="my-4" />
-
-        <div className="space-y-1">
-          {profileItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={currentPage === item.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-3 h-10"
-              onClick={() => onNavigate(item.id)}
-            >
-              <item.icon size={18} />
-              <span className="flex-1 text-left">{item.label}</span>
-            </Button>
-          ))}
-        </div>
-      </nav>
-
-      <div className="p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground text-center">
-          Built with BlogCraft Platform
+        {/* Logout */}
+        <div className="p-4 border-t border-gray-700">
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-gray-700 text-gray-300 transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+            {!isCollapsed && <span>Logout</span>}
+          </button>
         </div>
       </div>
     </div>
