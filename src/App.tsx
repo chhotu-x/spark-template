@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast, Toaster } from 'sonner'
 import Sidebar from '@/components/layout/Sidebar'
+import PerformanceMonitor from '@/components/layout/PerformanceMonitor'
 import Dashboard from '@/components/pages/Dashboard'
 import BlogManager from '@/components/pages/BlogManager'
 import BlogPost from '@/components/pages/BlogPost'
 import Profile from '@/components/pages/Profile'
 import PublicBlog from '@/components/pages/PublicBlog'
-import { Menu, X } from '@phosphor-icons/react'
+import AnalyticsDashboard from '@/components/pages/AnalyticsDashboard'
+import { Menu } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { useScheduledPosts } from '@/hooks/useScheduledPosts'
+import { usePerformance } from '@/hooks/usePerformance'
+import { useBlogAnalytics } from '@/hooks/useBlogAnalytics'
 
-export type Page = 'dashboard' | 'blog' | 'blog-post' | 'profile' | 'public-blog'
+export type Page = 'dashboard' | 'blog' | 'blog-post' | 'profile' | 'public-blog' | 'analytics'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
@@ -20,14 +24,38 @@ function App() {
   // Enable automatic publishing of scheduled posts
   useScheduledPosts()
 
-  const handleNavigate = (page: Page, postId?: string) => {
+  // Performance monitoring and optimization
+  const { metrics, clearExpiredCache, debounce } = usePerformance()
+  
+  // Blog analytics tracking
+  const { trackView } = useBlogAnalytics()
+
+  // Debounced navigation to prevent rapid page switching
+  const debouncedNavigate = debounce((page: Page, postId?: string) => {
     setCurrentPage(page)
     if (postId) {
       setSelectedBlogPost(postId)
+      trackView(postId) // Track page view for analytics
     }
-    // Close sidebar on mobile after navigation
     setSidebarOpen(false)
+  }, 150)
+
+  const handleNavigate = (page: Page, postId?: string) => {
+    debouncedNavigate(page, postId)
   }
+
+  // Clean up expired cache periodically
+  useEffect(() => {
+    const cleanup = setInterval(clearExpiredCache, 300000) // Every 5 minutes
+    return () => clearInterval(cleanup)
+  }, [clearExpiredCache])
+
+  // Monitor performance in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Performance metrics:', metrics)
+    }
+  }, [metrics])
 
   const renderPage = () => {
     switch (currentPage) {
@@ -41,6 +69,8 @@ function App() {
         return <Profile />
       case 'public-blog':
         return <PublicBlog onNavigate={handleNavigate} />
+      case 'analytics':
+        return <AnalyticsDashboard />
       default:
         return <Dashboard onNavigate={handleNavigate} />
     }
@@ -100,6 +130,9 @@ function App() {
           },
         }}
       />
+      
+      {/* Performance Monitor (development only) */}
+      <PerformanceMonitor />
     </div>
   )
 }

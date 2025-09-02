@@ -1,4 +1,4 @@
-import { PenTool, User, Home, Globe } from '@phosphor-icons/react'
+import { PenTool, User, Home, Globe, ChartBar } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -20,6 +20,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const blogItems = [
     { id: 'blog' as Page, label: 'Blog Manager', icon: PenTool, badge: posts.length },
     { id: 'public-blog' as Page, label: 'Public Blog', icon: Globe },
+    { id: 'analytics' as Page, label: 'Analytics', icon: ChartBar },
   ]
 
   const profileItems = [
