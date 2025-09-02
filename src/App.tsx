@@ -8,6 +8,7 @@ import Profile from '@/components/pages/Profile'
 import PublicBlog from '@/components/pages/PublicBlog'
 import { Menu, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { useScheduledPosts } from '@/hooks/useScheduledPosts'
 
 export type Page = 'dashboard' | 'blog' | 'blog-post' | 'profile' | 'public-blog'
 
@@ -15,6 +16,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [selectedBlogPost, setSelectedBlogPost] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Enable automatic publishing of scheduled posts
+  useScheduledPosts()
 
   const handleNavigate = (page: Page, postId?: string) => {
     setCurrentPage(page)

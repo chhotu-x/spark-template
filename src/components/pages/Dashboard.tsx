@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PenTool, Eye, Users, Globe } from '@phosphor-icons/react'
+import { PenTool, Eye, Users, Globe, Clock } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { Badge } from '@/components/ui/badge'
 import type { Page } from '@/App'
@@ -15,7 +15,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   const publishedPosts = posts.filter(post => post.status === 'published').length
   const draftPosts = posts.filter(post => post.status === 'draft').length
+  const scheduledPosts = posts.filter(post => post.status === 'scheduled').length
   const recentPosts = posts.slice(-3).reverse()
+
+  // Get next scheduled post
+  const nextScheduledPost = posts
+    .filter(post => post.status === 'scheduled' && post.scheduledAt)
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0]
 
   const stats = [
     {
@@ -35,20 +41,20 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       action: () => onNavigate('public-blog')
     },
     {
-      title: 'Drafts',
-      value: draftPosts,
-      description: 'Work in progress',
-      icon: PenTool,
+      title: 'Scheduled',
+      value: scheduledPosts,
+      description: 'Awaiting publication',
+      icon: Clock,
       color: 'text-accent',
       action: () => onNavigate('blog')
     },
     {
-      title: 'Profile Views',
-      value: 247,
-      description: 'This month',
-      icon: Eye,
+      title: 'Drafts',
+      value: draftPosts,
+      description: 'Work in progress',
+      icon: PenTool,
       color: 'text-muted-foreground',
-      action: () => onNavigate('profile')
+      action: () => onNavigate('blog')
     }
   ]
 
@@ -116,7 +122,11 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                         </p>
                       </div>
                       <Badge 
-                        variant={post.status === 'published' ? 'default' : 'secondary'}
+                        variant={
+                          post.status === 'published' ? 'default' : 
+                          post.status === 'scheduled' ? 'outline' : 
+                          'secondary'
+                        }
                       >
                         {post.status}
                       </Badge>
@@ -137,33 +147,96 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Content Overview</CardTitle>
+              <CardTitle>Publishing Schedule</CardTitle>
               <CardDescription>
-                Your publishing activity
+                Upcoming scheduled content
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              {nextScheduledPost ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-accent/10 border border-accent/20 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {nextScheduledPost.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Next to publish
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="ml-2">
+                        Scheduled
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-accent">
+                      <Clock size={14} />
+                      <span>
+                        {new Date(nextScheduledPost.scheduledAt).toLocaleDateString()} at{' '}
+                        {new Date(nextScheduledPost.scheduledAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {scheduledPosts > 1 && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">
+                        +{scheduledPosts - 1} more scheduled post{scheduledPosts - 1 > 1 ? 's' : ''}
+                      </p>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onNavigate('blog')}
+                        className="mt-2"
+                      >
+                        View all scheduled
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock size={48} className="text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">No scheduled posts</p>
+                  <Button onClick={() => onNavigate('blog')}>
+                    Schedule a post
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-6 lg:mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Overview</CardTitle>
+              <CardDescription>
+                Your publishing activity breakdown
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-3">
                     <Globe size={20} className="text-success" />
-                    <span className="font-medium">Published Posts</span>
+                    <span className="font-medium">Published</span>
                   </div>
                   <Badge variant="default">{publishedPosts}</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-3">
-                    <PenTool size={20} className="text-accent" />
-                    <span className="font-medium">Draft Posts</span>
+                    <Clock size={20} className="text-accent" />
+                    <span className="font-medium">Scheduled</span>
                   </div>
-                  <Badge variant="secondary">{draftPosts}</Badge>
+                  <Badge variant="outline">{scheduledPosts}</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Eye size={20} className="text-muted-foreground" />
-                    <span className="font-medium">Total Views</span>
+                    <PenTool size={20} className="text-muted-foreground" />
+                    <span className="font-medium">Drafts</span>
                   </div>
-                  <Badge variant="outline">1.2k</Badge>
+                  <Badge variant="secondary">{draftPosts}</Badge>
                 </div>
               </div>
             </CardContent>
@@ -179,7 +252,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button 
                   variant="outline" 
                   className="h-16 flex-col gap-2"
@@ -187,6 +260,14 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 >
                   <PenTool size={24} />
                   <span>Write Post</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex-col gap-2"
+                  onClick={() => onNavigate('blog')}
+                >
+                  <Clock size={24} />
+                  <span>Schedule Post</span>
                 </Button>
                 <Button 
                   variant="outline" 

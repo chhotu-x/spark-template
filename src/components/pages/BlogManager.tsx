@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PenTool, Plus, DotsThree, Trash, Eye, MagnifyingGlass, Calendar, Article } from '@phosphor-icons/react'
+import { PenTool, Plus, DotsThree, Trash, Eye, MagnifyingGlass, Calendar, Article, Clock, CheckSquare } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import type { Page } from '@/App'
@@ -17,11 +18,12 @@ interface BlogPost {
   title: string
   content: string
   excerpt?: string
-  status: 'draft' | 'published'
+  status: 'draft' | 'published' | 'scheduled'
   tags: string[]
   createdAt: string
   updatedAt: string
   publishedAt?: string
+  scheduledAt?: string
   readTime: number
 }
 
@@ -35,6 +37,8 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [postToDelete, setPostToDelete] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('all')
+  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
 
   const createNewPost = () => {
     const newPost: BlogPost = {
@@ -91,9 +95,10 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
   const getPostStats = () => {
     const published = posts.filter(post => post.status === 'published').length
     const drafts = posts.filter(post => post.status === 'draft').length
+    const scheduled = posts.filter(post => post.status === 'scheduled').length
     const totalWords = posts.reduce((sum, post) => sum + post.content.split(' ').length, 0)
     
-    return { published, drafts, totalWords, total: posts.length }
+    return { published, drafts, scheduled, totalWords, total: posts.length }
   }
 
   const stats = getPostStats()
@@ -106,8 +111,55 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
     })
   }
 
+  const togglePostSelection = (postId: string) => {
+    const newSelected = new Set(selectedPosts)
+    if (newSelected.has(postId)) {
+      newSelected.delete(postId)
+    } else {
+      newSelected.add(postId)
+    }
+    setSelectedPosts(newSelected)
+    setShowBulkActions(newSelected.size > 0)
+  }
+
+  const selectAllPosts = () => {
+    if (selectedPosts.size === filteredPosts.length) {
+      setSelectedPosts(new Set())
+      setShowBulkActions(false)
+    } else {
+      setSelectedPosts(new Set(filteredPosts.map(post => post.id)))
+      setShowBulkActions(true)
+    }
+  }
+
+  const bulkPublish = () => {
+    setPosts(currentPosts => 
+      currentPosts.map(post => {
+        if (selectedPosts.has(post.id) && post.status === 'draft') {
+          return {
+            ...post,
+            status: 'published' as const,
+            publishedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        }
+        return post
+      })
+    )
+    toast.success(`Published ${selectedPosts.size} posts`)
+    setSelectedPosts(new Set())
+    setShowBulkActions(false)
+  }
+
   const getStatusColor = (status: string) => {
-    return status === 'published' ? 'default' : 'secondary'
+    switch (status) {
+      case 'published':
+        return 'default'
+      case 'scheduled':
+        return 'outline'
+      default:
+        return 'secondary'
+    }
   }
 
   return (
@@ -126,7 +178,7 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -149,6 +201,19 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
               <div className="text-2xl font-bold text-success">{stats.published}</div>
               <p className="text-xs text-muted-foreground">
                 Live articles
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
+              <Calendar size={16} className="text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-accent">{stats.scheduled}</div>
+              <p className="text-xs text-muted-foreground">
+                To be published
               </p>
             </CardContent>
           </Card>
@@ -200,13 +265,42 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                   />
                 </div>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+                  <TabsList className="grid w-full grid-cols-4 sm:w-auto">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="published">Published</TabsTrigger>
+                    <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
                     <TabsTrigger value="draft">Drafts</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
+
+              {showBulkActions && (
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                  <span className="text-sm font-medium">
+                    {selectedPosts.size} post{selectedPosts.size !== 1 ? 's' : ''} selected
+                  </span>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Button size="sm" variant="outline" onClick={bulkPublish}>
+                      <Eye size={14} className="mr-1" />
+                      Publish
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={bulkUnpublish}>
+                      <PenTool size={14} className="mr-1" />
+                      Unpublish
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedPosts(new Set())
+                        setShowBulkActions(false)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {filteredPosts.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -214,6 +308,12 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                     <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[50px]">
+                          <Checkbox
+                            checked={selectedPosts.size === filteredPosts.length && filteredPosts.length > 0}
+                            onCheckedChange={selectAllPosts}
+                          />
+                        </TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Tags</TableHead>
@@ -225,6 +325,12 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                     <TableBody>
                       {filteredPosts.map((post) => (
                         <TableRow key={post.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedPosts.has(post.id)}
+                              onCheckedChange={() => togglePostSelection(post.id)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               <button
@@ -272,6 +378,11 @@ export default function BlogManager({ onNavigate }: BlogManagerProps) {
                               {post.publishedAt && post.status === 'published' && (
                                 <p className="text-xs text-muted-foreground">
                                   Published: {formatDate(post.publishedAt)}
+                                </p>
+                              )}
+                              {post.scheduledAt && post.status === 'scheduled' && (
+                                <p className="text-xs text-accent">
+                                  Scheduled: {formatDate(post.scheduledAt)}
                                 </p>
                               )}
                             </div>

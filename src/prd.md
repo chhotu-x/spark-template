@@ -23,9 +23,14 @@
 - **Success criteria**: Users can quickly understand their content status and take actions
 
 ### Blog Manager
-- **What it does**: Create, edit, organize, and manage all blog posts (drafts and published)
-- **Why it matters**: Core content creation and management functionality
-- **Success criteria**: Seamless writing experience with autosave and easy publishing
+- **What it does**: Create, edit, organize, and manage all blog posts (drafts, published, and scheduled)
+- **Why it matters**: Core content creation and management functionality with scheduling capabilities
+- **Success criteria**: Seamless writing experience with autosave, easy publishing, and scheduled publishing
+
+### Scheduling System
+- **What it does**: Allows authors to write content and schedule it for automatic publication at specific dates and times
+- **Why it matters**: Enables consistent content publishing and better content planning workflow
+- **Success criteria**: Reliable automatic publishing at scheduled times with clear scheduling interface
 
 ### Public Blog
 - **What it does**: Displays published content in a beautiful, reader-friendly format

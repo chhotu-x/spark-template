@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import { ArrowLeft, FloppyDisk, Eye, Share, Tag, Calendar, BookOpen } from '@phosphor-icons/react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ArrowLeft, FloppyDisk, Eye, Share, Tag, Calendar, BookOpen, Clock } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import type { Page } from '@/App'
@@ -17,11 +18,12 @@ interface BlogPost {
   title: string
   content: string
   excerpt?: string
-  status: 'draft' | 'published'
+  status: 'draft' | 'published' | 'scheduled'
   tags: string[]
   createdAt: string
   updatedAt: string
   publishedAt?: string
+  scheduledAt?: string
   readTime: number
 }
 
@@ -37,7 +39,10 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
   const [excerpt, setExcerpt] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [status, setStatus] = useState<'draft' | 'published'>('draft')
+  const [status, setStatus] = useState<'draft' | 'published' | 'scheduled'>('draft')
+  const [scheduledDate, setScheduledDate] = useState('')
+  const [scheduledTime, setScheduledTime] = useState('')
+  const [publishingMode, setPublishingMode] = useState<'immediate' | 'scheduled'>('immediate')
   const [isAutoSaving, setIsAutoSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
@@ -50,6 +55,14 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
       setExcerpt(currentPost.excerpt || '')
       setTags(currentPost.tags)
       setStatus(currentPost.status)
+      
+      // Set scheduling fields if post is scheduled
+      if (currentPost.scheduledAt) {
+        const scheduledDateTime = new Date(currentPost.scheduledAt)
+        setScheduledDate(scheduledDateTime.toISOString().split('T')[0])
+        setScheduledTime(scheduledDateTime.toTimeString().slice(0, 5))
+        setPublishingMode('scheduled')
+      }
     }
   }, [currentPost])
 
@@ -61,7 +74,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
     }, 2000)
 
     return () => clearTimeout(autoSaveTimer)
-  }, [title, content, excerpt, tags, status])
+  }, [title, content, excerpt, tags, status, scheduledDate, scheduledTime])
 
   const calculateReadTime = (text: string) => {
     const wordsPerMinute = 200
@@ -74,6 +87,12 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
 
     setIsAutoSaving(true)
 
+    // Determine scheduled datetime if scheduling
+    let scheduledAt: string | undefined
+    if (status === 'scheduled' && scheduledDate && scheduledTime) {
+      scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString()
+    }
+
     const updatedPost: BlogPost = {
       id: postId,
       title: title || 'Untitled Post',
@@ -83,9 +102,10 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
       tags,
       createdAt: currentPost?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      publishedAt: status === 'published' && currentPost?.status === 'draft' 
+      publishedAt: status === 'published' && currentPost?.status !== 'published' 
         ? new Date().toISOString() 
         : currentPost?.publishedAt,
+      scheduledAt,
       readTime: calculateReadTime(content)
     }
 
@@ -99,7 +119,11 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
     setIsAutoSaving(false)
 
     if (showToast) {
-      toast.success('Post saved successfully!')
+      if (status === 'scheduled') {
+        toast.success(`Post scheduled for ${new Date(scheduledAt!).toLocaleDateString()} at ${new Date(scheduledAt!).toLocaleTimeString()}`)
+      } else {
+        toast.success('Post saved successfully!')
+      }
     }
   }
 
@@ -118,13 +142,48 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
     setTags(tags.filter(tag => tag !== tagToRemove))
   }
 
-  const toggleStatus = () => {
-    const newStatus = status === 'draft' ? 'published' : 'draft'
-    setStatus(newStatus)
+  const handlePublishingModeChange = (mode: 'immediate' | 'scheduled') => {
+    setPublishingMode(mode)
     
-    if (newStatus === 'published') {
+    if (mode === 'immediate') {
+      setStatus('published')
+      setScheduledDate('')
+      setScheduledTime('')
+    } else {
+      setStatus('scheduled')
+      // Set default scheduled time to 1 hour from now
+      const defaultTime = new Date()
+      defaultTime.setHours(defaultTime.getHours() + 1)
+      setScheduledDate(defaultTime.toISOString().split('T')[0])
+      setScheduledTime(defaultTime.toTimeString().slice(0, 5))
+    }
+  }
+
+  const isScheduledTimeValid = () => {
+    if (!scheduledDate || !scheduledTime) return false
+    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`)
+    return scheduledDateTime > new Date()
+  }
+
+  const handleSaveWithValidation = () => {
+    if (status === 'scheduled' && !isScheduledTimeValid()) {
+      toast.error('Scheduled time must be in the future')
+      return
+    }
+    savePost(true)
+  }
+
+  const toggleStatus = () => {
+    if (status === 'draft') {
+      // When transitioning from draft, default to immediate publishing
+      setPublishingMode('immediate')
+      setStatus('published')
       toast.success('Post will be published when saved!')
     } else {
+      setStatus('draft')
+      setPublishingMode('immediate')
+      setScheduledDate('')
+      setScheduledTime('')
       toast.success('Post moved to drafts!')
     }
   }
@@ -181,7 +240,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
               <Share size={16} className="mr-2" />
               Share
             </Button>
-            <Button onClick={() => savePost(true)} size="sm">
+            <Button onClick={handleSaveWithValidation} size="sm">
               <FloppyDisk size={16} className="mr-2" />
               Save
             </Button>
@@ -247,30 +306,116 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Eye size={18} />
-                  Publishing
+                  Publishing Options
                 </CardTitle>
                 <CardDescription>
                   Control when and how your post is published
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Label>Status</Label>
                     <p className="text-sm text-muted-foreground">
-                      {status === 'published' ? 'Visible to readers' : 'Save as draft'}
+                      {status === 'published' 
+                        ? 'Visible to readers' 
+                        : status === 'scheduled'
+                        ? 'Will be published automatically'
+                        : 'Save as draft'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={status === 'published' ? 'default' : 'secondary'}>
+                    <Badge variant={
+                      status === 'published' ? 'default' : 
+                      status === 'scheduled' ? 'outline' : 
+                      'secondary'
+                    }>
                       {status}
                     </Badge>
                     <Switch
-                      checked={status === 'published'}
+                      checked={status !== 'draft'}
                       onCheckedChange={toggleStatus}
                     />
                   </div>
                 </div>
+
+                {status !== 'draft' && (
+                  <>
+                    <Separator />
+                    
+                    <div className="space-y-4">
+                      <Label className="text-sm font-medium">Publishing Method</Label>
+                      <Select value={publishingMode} onValueChange={handlePublishingModeChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="immediate">
+                            <div className="flex items-center gap-2">
+                              <Eye size={14} />
+                              Publish immediately
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="scheduled">
+                            <div className="flex items-center gap-2">
+                              <Clock size={14} />
+                              Schedule for later
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {publishingMode === 'scheduled' && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="scheduled-date" className="text-sm">Date</Label>
+                            <Input
+                              id="scheduled-date"
+                              type="date"
+                              value={scheduledDate}
+                              onChange={(e) => setScheduledDate(e.target.value)}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="scheduled-time" className="text-sm">Time</Label>
+                            <Input
+                              id="scheduled-time"
+                              type="time"
+                              value={scheduledTime}
+                              onChange={(e) => setScheduledTime(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        
+                        {scheduledDate && scheduledTime && (
+                          <div className={`p-3 border rounded-md ${
+                            isScheduledTimeValid() 
+                              ? 'bg-accent/10 border-accent/20' 
+                              : 'bg-destructive/10 border-destructive/20'
+                          }`}>
+                            <p className={`text-sm font-medium ${
+                              isScheduledTimeValid() ? 'text-accent' : 'text-destructive'
+                            }`}>
+                              {isScheduledTimeValid() 
+                                ? `Scheduled for: ${new Date(`${scheduledDate}T${scheduledTime}`).toLocaleDateString()} at ${new Date(`${scheduledDate}T${scheduledTime}`).toLocaleTimeString()}`
+                                : 'Invalid: Scheduled time must be in the future'
+                              }
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {isScheduledTimeValid() 
+                                ? 'Your post will be automatically published at this time'
+                                : 'Please select a future date and time'
+                              }
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <Separator />
 
@@ -289,6 +434,12 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
                       <div className="flex items-center gap-2">
                         <Eye size={14} />
                         <span>Published: {new Date(currentPost.publishedAt).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {currentPost.scheduledAt && currentPost.status === 'scheduled' && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} />
+                        <span>Scheduled: {new Date(currentPost.scheduledAt).toLocaleDateString()} at {new Date(currentPost.scheduledAt).toLocaleTimeString()}</span>
                       </div>
                     )}
                   </div>
