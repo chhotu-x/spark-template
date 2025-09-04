@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useKV } from '@github/spark/hooks'
-import { ArrowLeft, Calendar, Clock, Eye, FloppyDisk, Trash, Share } from '@phosphor-icons/react'
+import { ArrowLeft, Calendar, Clock, Eye, FloppyDisk, Trash, Share, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import ContentEditorInsights from '@/components/pages/ContentEditorInsights'
 import type { BlogPost, Page } from '@/lib/types'
 import { useBlogAnalytics } from '@/hooks/useBlogAnalytics'
 
@@ -201,8 +203,8 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
                 onClick={() => setIsEditing(true)}
                 className="gap-2"
               >
-                <FloppyDisk size={16} />
-                Edit
+                <Sparkle size={16} />
+                Edit with AI
               </Button>
               
               <Button
@@ -358,16 +360,47 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
           
           <CardContent>
             {isEditing ? (
-              <div>
-                <label className="text-sm font-medium">Content</label>
-                <Textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Write your post content..."
-                  rows={20}
-                  className="mt-2"
-                />
-              </div>
+              <Tabs defaultValue="editor" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="editor">Content Editor</TabsTrigger>
+                  <TabsTrigger value="insights">AI Insights & Analytics</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="editor" className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Content</label>
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        placeholder="Write your post content..."
+                        rows={20}
+                        className="mt-2"
+                      />
+                    </div>
+                    
+                    <div className="border-l pl-4">
+                      <ContentEditorInsights
+                        content={editContent}
+                        title={editTitle}
+                        tags={editTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)}
+                        metaDescription={editExcerpt}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="insights" className="mt-4">
+                  <div className="h-96">
+                    <ContentEditorInsights
+                      content={editContent}
+                      title={editTitle}
+                      tags={editTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)}
+                      metaDescription={editExcerpt}
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
             ) : (
               <div className="prose prose-gray max-w-none">
                 {post.content.split('\n').map((paragraph, index) => (
