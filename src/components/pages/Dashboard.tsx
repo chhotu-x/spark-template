@@ -3,14 +3,10 @@ import { Button } from '@/components/ui/button'
 import { PenTool, Eye, Users, Globe, Clock } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { Badge } from '@/components/ui/badge'
-import type { Page } from '@/App'
+import type { Page, NavigationProps, BlogPost } from '@/lib/types'
 
-interface DashboardProps {
-  onNavigate: (page: Page) => void
-}
-
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [posts] = useKV<any[]>('blog-posts', [])
+export default function Dashboard({ onNavigate }: NavigationProps) {
+  const [posts] = useKV<BlogPost[]>('blog-posts', [])
   const [profile] = useKV<any>('user-profile', null)
 
   const publishedPosts = posts.filter(post => post.status === 'published').length

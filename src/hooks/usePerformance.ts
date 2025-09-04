@@ -1,21 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { useKV } from '@github/spark/hooks'
-
-interface PerformanceMetrics {
-  pageLoadTime: number
-  renderTime: number
-  interactionLatency: number
-  memoryUsage?: number
-  componentRenderCount?: number
-  lastInteraction?: number
-}
-
-interface CacheEntry<T> {
-  data: T
-  timestamp: number
-  ttl: number
-  hits: number
-}
+import type { PerformanceMetrics, CacheEntry } from '@/lib/types'
 
 /**
  * Enhanced performance monitoring and caching hook

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { useKV } from '@github/spark/hooks'
-import type { Page } from '@/App'
+import type { Page } from '@/lib/types'
 
 interface SidebarProps {
   currentPage: Page

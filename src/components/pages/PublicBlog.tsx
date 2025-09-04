@@ -6,26 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Calendar, Tag, BookOpen, ArrowLeft, MagnifyingGlass, User, Globe } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
-import type { Page } from '@/App'
+import type { BlogPost, NavigationProps } from '@/lib/types'
 
-interface BlogPost {
-  id: string
-  title: string
-  content: string
-  excerpt?: string
-  status: 'draft' | 'published'
-  tags: string[]
-  createdAt: string
-  updatedAt: string
-  publishedAt?: string
-  readTime: number
-}
-
-interface PublicBlogProps {
-  onNavigate: (page: Page, postId?: string) => void
-}
-
-export default function PublicBlog({ onNavigate }: PublicBlogProps) {
+export default function PublicBlog({ onNavigate }: NavigationProps) {
   const [posts] = useKV<BlogPost[]>('blog-posts', [])
   const [profile] = useKV<any>('user-profile', null)
   const [searchTerm, setSearchTerm] = useState('')

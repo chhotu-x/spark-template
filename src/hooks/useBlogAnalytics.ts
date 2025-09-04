@@ -1,26 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-
-interface BlogAnalytics {
-  views: Record<string, number>
-  likes: Record<string, number>
-  comments: Record<string, number>
-  shares: Record<string, number>
-  readingTime: Record<string, number[]> // Array of reading times
-  popularTags: Record<string, number>
-  dailyViews: Record<string, number> // Date -> view count
-  userEngagement: {
-    totalSessions: number
-    averageSessionTime: number
-    bounceRate: number
-  }
-}
-
-interface ViewSession {
-  postId: string
-  startTime: number
-  endTime?: number
-}
+import type { BlogAnalytics, ViewSession } from '@/lib/types'
 
 /**
  * Enhanced analytics hook for blog performance tracking

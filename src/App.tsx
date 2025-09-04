@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo, Suspense } from 'react'
 import { Toaster } from 'sonner'
 import Sidebar from '@/components/layout/Sidebar'
 import PerformanceMonitor from '@/components/layout/PerformanceMonitor'
+import SystemHealthCheck from '@/components/layout/SystemHealthCheck'
 import BlogManager from '@/components/pages/BlogManager'
 import BlogPost from '@/components/pages/BlogPost'
 import Profile from '@/components/pages/Profile'
@@ -10,39 +11,64 @@ import AnalyticsDashboard from '@/components/pages/AnalyticsDashboard'
 import Dashboard from '@/components/pages/Dashboard'
 import { Menu } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { useScheduledPosts } from '@/hooks/useScheduledPosts'
 import { usePerformance } from '@/hooks/usePerformance'
 import { useBlogAnalytics } from '@/hooks/useBlogAnalytics'
+import { useErrorHandler } from '@/hooks/useErrorHandler'
+import type { Page } from '@/lib/types'
 
-export type Page = 'dashboard' | 'blog' | 'blog-post' | 'profile' | 'public-blog' | 'analytics'
+// Loading component for better UX
+const LoadingSpinner = memo(() => (
+  <div className="flex items-center justify-center h-full">
+    <Card className="w-64">
+      <CardContent className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-muted-foreground">Loading...</span>
+      </CardContent>
+    </Card>
+  </div>
+))
+
+LoadingSpinner.displayName = 'LoadingSpinner'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard')
   const [selectedBlogPost, setSelectedBlogPost] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Enable automatic publishing of scheduled posts
+  // Enable automatic publishing of scheduled posts with error handling
   useScheduledPosts()
 
-  // Performance monitoring and optimization
+  // Performance monitoring and optimization with error handling
   const { metrics, clearExpiredCache, debounce } = usePerformance()
   
-  // Blog analytics tracking
+  // Blog analytics tracking with error handling
   const { trackView } = useBlogAnalytics()
 
-  // Debounced navigation to prevent rapid page switching
-  const debouncedNavigate = debounce((page: Page, postId?: string) => {
-    setCurrentPage(page)
-    if (postId) {
-      setSelectedBlogPost(postId)
-      trackView(postId) // Track page view for analytics
-    }
-    setSidebarOpen(false)
-  }, 150)
+  // Error handling
+  const { handleError, handleAsyncError } = useErrorHandler()
 
-  const handleNavigate = (page: Page, postId?: string) => {
+  // Debounced navigation to prevent rapid page switching with error handling
+  const debouncedNavigate = useCallback(
+    debounce((page: Page, postId?: string) => {
+      try {
+        setCurrentPage(page)
+        if (postId) {
+          setSelectedBlogPost(postId)
+          trackView(postId) // Track page view for analytics
+        }
+        setSidebarOpen(false)
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error(String(error)), 'navigation')
+      }
+    }, 150),
+    [debounce, trackView, handleError]
+  )
+
+  const handleNavigate = useCallback((page: Page, postId?: string) => {
     debouncedNavigate(page, postId)
-  }
+  }, [debouncedNavigate])
 
   // Clean up expired cache periodically
   useEffect(() => {
@@ -57,24 +83,30 @@ function App() {
     }
   }, [metrics])
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard onNavigate={handleNavigate} />
-      case 'blog':
-        return <BlogManager onNavigate={handleNavigate} />
-      case 'blog-post':
-        return <BlogPost postId={selectedBlogPost} onNavigate={handleNavigate} />
-      case 'profile':
-        return <Profile />
-      case 'public-blog':
-        return <PublicBlog onNavigate={handleNavigate} />
-      case 'analytics':
-        return <AnalyticsDashboard />
-      default:
-        return <Dashboard onNavigate={handleNavigate} />
+  // Memoized page renderer for better performance
+  const renderPage = useCallback(() => {
+    try {
+      switch (currentPage) {
+        case 'dashboard':
+          return <Dashboard onNavigate={handleNavigate} />
+        case 'blog':
+          return <BlogManager onNavigate={handleNavigate} />
+        case 'blog-post':
+          return <BlogPost postId={selectedBlogPost} onNavigate={handleNavigate} />
+        case 'profile':
+          return <Profile />
+        case 'public-blog':
+          return <PublicBlog onNavigate={handleNavigate} />
+        case 'analytics':
+          return <AnalyticsDashboard />
+        default:
+          return <Dashboard onNavigate={handleNavigate} />
+      }
+    } catch (error) {
+      console.error('Error rendering page:', error)
+      return <Dashboard onNavigate={handleNavigate} />
     }
-  }
+  }, [currentPage, selectedBlogPost, handleNavigate])
 
   return (
     <div className="flex h-screen bg-background">
@@ -116,7 +148,9 @@ function App() {
         </div>
         
         <main className="flex-1 overflow-auto">
-          {renderPage()}
+          <Suspense fallback={<LoadingSpinner />}>
+            {renderPage()}
+          </Suspense>
         </main>
       </div>
       
@@ -133,6 +167,9 @@ function App() {
       
       {/* Performance Monitor (development only) */}
       <PerformanceMonitor />
+      
+      {/* System Health Check (development only) */}
+      <SystemHealthCheck />
     </div>
   )
 }

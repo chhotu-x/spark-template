@@ -1,20 +1,7 @@
 import { useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
-
-interface BlogPost {
-  id: string
-  title: string
-  content: string
-  excerpt?: string
-  status: 'draft' | 'published' | 'scheduled'
-  tags: string[]
-  createdAt: string
-  updatedAt: string
-  publishedAt?: string
-  scheduledAt?: string
-  readTime: number
-}
+import type { BlogPost } from '@/lib/types'
 
 /**
  * Hook to automatically publish scheduled posts when their scheduled time arrives
