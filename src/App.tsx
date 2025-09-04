@@ -1,12 +1,5 @@
 import { useState, useEffect } from 'react'
-import { toast, Toaster } from 'sonner'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
-import { LoginForm } from './components/auth/LoginForm';
-import { DashboardLayout } from './components/layout/DashboardLayout';
-import { Dashboard } from './pages/Dashboard';
-import { Users } from './pages/Users';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Toaster } from 'sonner'
 import Sidebar from '@/components/layout/Sidebar'
 import PerformanceMonitor from '@/components/layout/PerformanceMonitor'
 import BlogManager from '@/components/pages/BlogManager'
@@ -14,6 +7,7 @@ import BlogPost from '@/components/pages/BlogPost'
 import Profile from '@/components/pages/Profile'
 import PublicBlog from '@/components/pages/PublicBlog'
 import AnalyticsDashboard from '@/components/pages/AnalyticsDashboard'
+import Dashboard from '@/components/pages/Dashboard'
 import { Menu } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { useScheduledPosts } from '@/hooks/useScheduledPosts'
@@ -83,79 +77,63 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <Router>
-        <div className="flex h-screen bg-background">
-          {/* Mobile sidebar overlay */}
-          {sidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
-          
-          {/* Sidebar */}
-          <div className={`
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 transition-transform duration-200 ease-in-out lg:transition-none
-          `}>
-            <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-          </div>
-          
-          {/* Main content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Mobile header */}
-            <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(true)}
-                className="p-2"
-              >
-                <Menu size={20} />
-              </Button>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-                  <div className="w-3 h-3 bg-primary-foreground rounded-sm" />
-                </div>
-                <span className="font-semibold text-foreground">BlogCraft</span>
-              </div>
-              <div className="w-8" /> {/* Spacer for centering */}
+    <div className="flex h-screen bg-background">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 transition-transform duration-200 ease-in-out lg:transition-none
+      `}>
+        <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
+      </div>
+      
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile header */}
+        <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+            className="p-2"
+          >
+            <Menu size={20} />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+              <div className="w-3 h-3 bg-primary-foreground rounded-sm" />
             </div>
-            
-            <main className="flex-1 overflow-hidden">
-              <Routes>
-                <Route path="/login" element={<LoginForm />} />
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route element={<ProtectedRoute />}>
-                  <Route element={<DashboardLayout />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/settings" element={<div>Settings Page</div>} />
-                    <Route path="/reports" element={<div>Reports Page</div>} />
-                    <Route path="/notifications" element={<div>Notifications Page</div>} />
-                  </Route>
-                </Route>
-              </Routes>
-            </main>
+            <span className="font-semibold text-foreground">BlogCraft</span>
           </div>
-          
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'var(--popover)',
-                border: '1px solid var(--border)',
-                color: 'var(--popover-foreground)',
-              },
-            }}
-          />
-          
-          {/* Performance Monitor (development only) */}
-          <PerformanceMonitor />
+          <div className="w-8" /> {/* Spacer for centering */}
         </div>
-      </Router>
-    </AuthProvider>
+        
+        <main className="flex-1 overflow-auto">
+          {renderPage()}
+        </main>
+      </div>
+      
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: 'var(--popover)',
+            border: '1px solid var(--border)',
+            color: 'var(--popover-foreground)',
+          },
+        }}
+      />
+      
+      {/* Performance Monitor (development only) */}
+      <PerformanceMonitor />
+    </div>
   )
 }
 
