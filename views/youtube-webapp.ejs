@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f9f9f9;
+            color: #030303;
+        }
+        
+        /* YouTube Header */
+        .yt-header {
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .yt-header-main {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            gap: 16px;
+        }
+        
+        .yt-logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #030303;
+            text-decoration: none;
+        }
+        
+        .yt-logo-icon {
+            width: 32px;
+            height: 22px;
+            background: #ff0000;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .yt-search-container {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .yt-search-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .yt-search-input {
+            flex: 1;
+            border: none;
+            padding: 8px 16px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .yt-search-btn {
+            background: #f8f8f8;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            border-left: 1px solid #ccc;
+        }
+        
+        .yt-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .yt-icon-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        
+        .yt-icon-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        /* Navigation Tabs */
+        .yt-nav-tabs {
+            background: #fff;
+            padding: 0 16px;
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .yt-nav-tab {
+            padding: 12px 0;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            font-size: 14px;
+            color: #606060;
+        }
+        
+        .yt-nav-tab.active {
+            color: #030303;
+            border-bottom-color: #030303;
+        }
+        
+        /* Video Grid */
+        .yt-content {
+            padding: 16px;
+        }
+        
+        .yt-video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .yt-video-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .yt-video-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .yt-thumbnail-container {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        
+        .yt-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .yt-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .yt-video-info {
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .yt-channel-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            flex-shrink: 0;
+        }
+        
+        .yt-video-details {
+            flex: 1;
+        }
+        
+        .yt-video-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #030303;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        
+        .yt-video-meta {
+            font-size: 12px;
+            color: #606060;
+            line-height: 1.4;
+        }
+        
+        /* Player Modal */
+        .yt-player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+        }
+        
+        .yt-player-modal.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .yt-player-header {
+            background: #212121;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .yt-player-title {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .yt-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        
+        .yt-player-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .yt-player-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* Sidebar */
+        .yt-sidebar {
+            position: fixed;
+            left: -280px;
+            top: 0;
+            bottom: 0;
+            width: 280px;
+            background: #fff;
+            transition: left 0.3s;
+            z-index: 200;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        }
+        
+        .yt-sidebar.active {
+            left: 0;
+        }
+        
+        .yt-sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .yt-sidebar-section {
+            padding: 16px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .yt-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 8px 24px;
+            cursor: pointer;
+            color: #030303;
+            text-decoration: none;
+        }
+        
+        .yt-sidebar-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .yt-sidebar-item.active {
+            background: #e5e5e5;
+            font-weight: 500;
+        }
+        
+        .yt-sidebar-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Experimental Features */
+        .experimental-badge {
+            background: #065fd4;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .preview-badge {
+            background: #1a73e8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        /* Loading */
+        .yt-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #606060;
+        }
+        
+        .yt-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #ff0000;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .yt-video-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .yt-search-container {
+                display: none;
+            }
+            
+            .yt-header-main {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // State management with performance optimization
+        let currentTab = 'home';
+        let searchQuery = '';
+        let videos = [];
+        let viewCache = new Map();
+        let loadingStates = new Map();
+        
+        // Performance observer
+        const performanceObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                console.log(`${entry.name}: ${entry.duration}ms`);
+            }
+        });
+        performanceObserver.observe({ entryTypes: ['measure'] });
+        
+        // Initialize with optimizations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Preload critical resources
+            preloadResources();
+            
+            // Initialize intersection observer for lazy loading
+            initLazyLoading();
+            
+            // Load initial content
+            loadContent('home');
+            
+            // Setup keyboard shortcuts
+            setupKeyboardShortcuts();
+        });
+        
+        // Preload critical resources
+        function preloadResources() {
+            const preconnect = ['https://i.ytimg.com', 'https://www.youtube.com'];
+            preconnect.forEach(url => {
+                const link = document.createElement('link');
+                link.rel = 'preconnect';
+                link.href = url;
+                document.head.appendChild(link);
+            });
+        }
+        
+        // Lazy loading for images
+        function initLazyLoading() {
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            imageObserver.unobserve(img);
+                        }
+                    });
+                }, {
+                    rootMargin: '100px'
+                });
+                
+                window.imageObserver = imageObserver;
+            }
+        }
+        
+        // Sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+        
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.yt-nav-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadContent(tab);
+        }
+        
+        // Enhanced content loading with caching
+        async function loadContent(tab) {
+            performance.mark('load-content-start');
+            
+            // Check cache first
+            const cacheKey = `${tab}-${Date.now() - (Date.now() % 300000)}`; // 5-minute cache
+            if (viewCache.has(cacheKey)) {
+                displayContent(viewCache.get(cacheKey));
+                return;
+            }
+            
+            const content = document.getElementById('content');
+            
+            // Show skeleton loader instead of spinner
+            content.innerHTML = generateSkeletonLoader();
+            
+            try {
+                const data = await fetchContent(tab);
+                viewCache.set(cacheKey, data);
+                
+                // Cleanup old cache entries
+                if (viewCache.size > 10) {
+                    const firstKey = viewCache.keys().next().value;
+                    viewCache.delete(firstKey);
+                }
+                
+                displayContent(data);
+                
+                performance.mark('load-content-end');
+                performance.measure('load-content', 'load-content-start', 'load-content-end');
+            } catch (error) {
+                content.innerHTML = generateErrorUI(error);
+            }
+        }
+        
+        // Fetch content based on tab
+        async function fetchContent(tab) {
+            switch(tab) {
+                case 'home':
+                    return await fetchHomeVideos();
+                case 'trending':
+                    return await fetchTrendingVideos();
+                case 'subscriptions':
+                    return await fetchSubscriptions();
+                case 'library':
+                    return await fetchLibrary();
+                default:
+                    throw new Error('Unknown tab');
+            }
+        }
+        
+        // Display content with optimized rendering
+        function displayContent(data) {
+            const content = document.getElementById('content');
+            
+            if (data.videos) {
+                displayVideos(data.videos);
+            } else if (data.playlists) {
+                displayPlaylists(data.playlists);
+            } else {
+                displayMixed(data);
+            }
+        }
+        
+        // Optimized video display with virtual scrolling for large lists
+        function displayVideos(videos) {
+            const content = document.getElementById('content');
+            const html = `
+                <div class="yt-video-grid" id="videoGrid">
+                    ${videos.slice(0, 12).map(video => generateVideoCard(video)).join('')}
+                </div>
+                ${videos.length > 12 ? '<div id="loadMoreTrigger" style="height: 100px;"></div>' : ''}
+            `;
+            content.innerHTML = html;
+            
+            // Lazy load remaining videos
+            if (videos.length > 12) {
+                setupInfiniteScroll(videos.slice(12));
+            }
+            
+            // Setup lazy loading for thumbnails
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                window.imageObserver?.observe(img);
+            });
+        }
+        
+        // Generate optimized video card
+        function generateVideoCard(video) {
+            return `
+                <div class="yt-video-card" data-video-id="${video.id}">
+                    <div class="yt-thumbnail-container">
+                        <img data-src="${video.thumbnail}" 
+                             alt="${escapeHtml(video.title)}"
+                             class="yt-thumbnail"
+                             loading="lazy">
+                        <div class="yt-duration">${video.duration}</div>
+                        <div class="yt-hover-actions">
+                            <button onclick="addToQueue('${video.id}')" class="yt-action-btn">
+                                <span class="icon">⏱️</span> Watch Later
+                            </button>
+                            <button onclick="quickEmbed('${video.id}')" class="yt-action-btn">
+                                <span class="icon">🔗</span> Embed
+                            </button>
+                        </div>
+                    </div>
+                    <div class="yt-video-info">
+                        <h3 class="yt-video-title" onclick="playVideo('${video.id}', '${escapeHtml(video.title)}')">${escapeHtml(video.title)}</h3>
+                        <div class="yt-video-meta">
+                            <span class="yt-channel">${escapeHtml(video.channel)}</span>
+                            <span class="yt-stats">${formatViews(video.views)} • ${video.age}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Play video
+        function playVideo(videoId, title) {
+            const modal = document.getElementById('playerModal');
+            const wrapper = document.getElementById('playerWrapper');
+            const titleEl = document.getElementById('playerTitle');
+            
+            titleEl.textContent = title;
+            wrapper.innerHTML = `
+                <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            `;
+            
+            modal.classList.add('active');
+            
+            // Track view
+            trackVideoView(videoId);
+        }
+        
+        // Close player
+        function closePlayer() {
+            const modal = document.getElementById('playerModal');
+            const wrapper = document.getElementById('playerWrapper');
+            
+            modal.classList.remove('active');
+            wrapper.innerHTML = '';
+        }
+        
+        // Search
+        function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+            
+            searchQuery = query;
+            searchVideos(query);
+        }
+        
+        async function searchVideos(query) {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="yt-loading"><div class="yt-spinner"></div></div>';
+            
+            try {
+                // In production, call YouTube Search API
+                const results = generateMockVideos(15, 'search', query);
+                displayVideos(results);
+            } catch (error) {
+                content.innerHTML = '<div class="yt-loading">Search failed</div>';
+            }
+        }
+        
+        // Experimental features with performance tracking
+        function showExperimentalFeatures() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+                    <h2 style="margin-bottom: 20px;">Experimental Features</h2>
+                    
+                    <div class="feature-grid">
+                        <div class="feature-card" onclick="enableFeature('aiRecommendations')">
+                            <div class="feature-icon">🤖</div>
+                            <h3>AI Recommendations</h3>
+                            <p>Get personalized video suggestions powered by machine learning</p>
+                            <div class="feature-status">Beta</div>
+                        </div>
+                        
+                        <div class="feature-card" onclick="enableFeature('liveSync')">
+                            <div class="feature-icon">🔄</div>
+                            <h3>Live Sync</h3>
+                            <p>Watch videos in sync with friends in real-time</p>
+                            <div class="feature-status">Experimental</div>
+                        </div>
+                        
+                        <div class="feature-card" onclick="enableFeature('smartDownload')">
+                            <div class="feature-icon">⬇️</div>
+                            <h3>Smart Download</h3>
+                            <p>Intelligent video caching for offline viewing</p>
+                            <div class="feature-status">Coming Soon</div>
+                        </div>
+                        
+                        <div class="feature-card" onclick="enableFeature('vrMode')">
+                            <div class="feature-icon">🥽</div>
+                            <h3>VR Mode</h3>
+                            <p>Immersive 360° video experience</p>
+                            <div class="feature-status">Alpha</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-stats">
+                        <h3>Performance Metrics</h3>
+                        <div id="perfStats"></div>
+                    </div>
+                </div>
+            `;
+            
+            updatePerformanceStats();
+        }
+        
+        // Advanced embed creator with optimization
+        function showEmbedCreator() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="embed-creator-advanced">
+                    <h2>Advanced Embed Creator</h2>
+                    
+                    <div class="embed-options">
+                        <div class="option-group">
+                            <label>Video URL or ID:</label>
+                            <input type="text" id="embedVideoId" placeholder="Enter YouTube URL or Video ID">
+                        </div>
+                        
+                        <div class="option-group">
+                            <label>Embed Type:</label>
+                            <select id="embedType">
+                                <option value="standard">Standard Player</option>
+                                <option value="minimal">Minimal Player</option>
+                                <option value="aura">Aura Experience</option>
+                                <option value="responsive">Responsive</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label>Features:</label>
+                            <div class="feature-toggles">
+                                <label><input type="checkbox" id="feat-autoplay"> Autoplay</label>
+                                <label><input type="checkbox" id="feat-loop"> Loop</label>
+                                <label><input type="checkbox" id="feat-controls" checked> Controls</label>
+                                <label><input type="checkbox" id="feat-privacy" checked> Privacy Enhanced</label>
+                                <label><input type="checkbox" id="feat-captions"> Captions</label>
+                                <label><input type="checkbox" id="feat-analytics" checked> Analytics</label>
+                            </div>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label>Performance:</label>
+                            <div class="perf-options">
+                                <label><input type="checkbox" id="perf-lazy" checked> Lazy Load</label>
+                                <label><input type="checkbox" id="perf-prefetch" checked> Prefetch</label>
+                                <label><input type="checkbox" id="perf-compress" checked> Compression</label>
+                            </div>
+                        </div>
+                        
+                        <button onclick="generateAdvancedEmbed()" class="primary-btn">Generate Embed</button>
+                    </div>
+                    
+                    <div id="embedResult" style="display: none;">
+                        <h3>Your Embed Code:</h3>
+                        <textarea id="embedCode" readonly></textarea>
+                        <div class="embed-actions">
+                            <button onclick="copyEmbedCode()">Copy Code</button>
+                            <button onclick="previewEmbed()">Preview</button>
+                            <button onclick="downloadEmbedKit()">Download Kit</button>
+                        </div>
+                        <div id="embedPreview"></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Generate advanced embed with optimizations
+        async function generateAdvancedEmbed() {
+            const videoInput = document.getElementById('embedVideoId').value;
+            const embedType = document.getElementById('embedType').value;
+            
+            const videoId = extractVideoId(videoInput);
+            if (!videoId) {
+                alert('Please enter a valid YouTube URL or video ID');
+                return;
+            }
+            
+            const features = {
+                autoplay: document.getElementById('feat-autoplay').checked,
+                loop: document.getElementById('feat-loop').checked,
+                controls: document.getElementById('feat-controls').checked,
+                privacyMode: document.getElementById('feat-privacy').checked,
+                captions: document.getElementById('feat-captions').checked,
+                analytics: document.getElementById('feat-analytics').checked
+            };
+            
+            const performance = {
+                lazyLoad: document.getElementById('perf-lazy').checked,
+                prefetch: document.getElementById('perf-prefetch').checked,
+                compress: document.getElementById('perf-compress').checked
+            };
+            
+            try {
+                const response = await fetch('/api/embeds/youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoId,
+                        template: embedType,
+                        features,
+                        customization: { performance }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('embedCode').value = data.embedCode;
+                    document.getElementById('embedResult').style.display = 'block';
+                    
+                    // Show preview
+                    showEmbedPreview(data.previewUrl);
+                }
+            } catch (error) {
+                alert('Error generating embed: ' + error.message);
+            }
+        }
+        
+        // Helper functions
+        function extractVideoId(input) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/,
+                /^[a-zA-Z0-9_-]{11}$/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = input.match(pattern);
+                if (match) {
+                    return match[1] || match[0];
+                }
+            }
+            return null;
+        }
+        
+        function generateSkeletonLoader() {
+            return `
+                <div class="skeleton-grid">
+                    ${Array(8).fill(0).map(() => `
+                        <div class="skeleton-card">
+                            <div class="skeleton-thumbnail"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-title"></div>
+                                <div class="skeleton-meta"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function setupInfiniteScroll(remainingVideos) {
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && remainingVideos.length > 0) {
+                    const grid = document.getElementById('videoGrid');
+                    const nextBatch = remainingVideos.splice(0, 6);
+                    
+                    nextBatch.forEach(video => {
+                        const card = document.createElement('div');
+                        card.innerHTML = generateVideoCard(video);
+                        grid.appendChild(card.firstElementChild);
+                    });
+                    
+                    // Re-observe lazy images
+                    document.querySelectorAll('img[data-src]').forEach(img => {
+                        window.imageObserver?.observe(img);
+                    });
+                    
+                    if (remainingVideos.length === 0) {
+                        observer.disconnect();
+                    }
+                }
+            });
+            
+            const trigger = document.getElementById('loadMoreTrigger');
+            if (trigger) observer.observe(trigger);
+        }
+        
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                
+                switch(e.key) {
+                    case '/':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                    case 'h':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            loadContent('home');
+                        }
+                        break;
+                    case 'Escape':
+                        closePlayer();
+                        break;
+                }
+            });
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        function formatViews(views) {
+            if (views >= 1000000000) return (views / 1000000000).toFixed(1) + 'B';
+            if (views >= 1000000) return (views / 1000000).toFixed(1) + 'M';
+            if (views >= 1000) return (views / 1000).toFixed(1) + 'K';
+            return views.toString();
+        }
+    </script>
+</body>
+</html>
+        
+        // Search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>

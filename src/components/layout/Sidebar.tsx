@@ -1,99 +1,163 @@
 import React, { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import {
-  Home,
-  Users,
-  Settings,
-  BarChart,
-  Bell,
-  LogOut,
-  Menu,
-  X,
-  User,
-} from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth'
+import { BookOpen, Pen, Eye, User, ChartBar, Globe } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { useKV } from '@github/spark/hooks'
+import type { Page } from '@/App'
 
-interface NavItem {
-  path: string
-  label: string
-  icon: React.ReactNode
+interface SidebarProps {
+  currentPage: Page
+  onNavigate: (page: Page) => void
 }
 
-export const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+interface NavItem {
+  page: Page
+  label: string
+  icon: React.ReactNode
+  badge?: number
+}
 
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate }) => {
+  const [posts] = useKV<any[]>('blog-posts', [])
+  const [profile] = useKV<any>('user-profile', null)
+  
+  const publishedCount = (posts || []).filter(post => post.status === 'published').length
+  const draftCount = (posts || []).filter(post => post.status === 'draft').length
+  const scheduledCount = (posts || []).filter(post => post.status === 'scheduled').length
+
+  
   const navItems: NavItem[] = [
-    { path: '/dashboard', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
-    { path: '/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
-    { path: '/reports', label: 'Reports', icon: <BarChart className="h-5 w-5" /> },
-    { path: '/notifications', label: 'Notifications', icon: <Bell className="h-5 w-5" /> },
-    { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
+    {
+      page: 'dashboard',
+      label: 'Dashboard',
+      icon: <BookOpen size={20} />,
+    },
+    {
+      page: 'blog',
+      label: 'Blog Manager',
+      icon: <Pen size={20} />,
+      badge: draftCount + scheduledCount,
+    },
+    {
+      page: 'public-blog',
+      label: 'View Blog',
+      icon: <Globe size={20} />,
+      badge: publishedCount,
+    },
+    {
+      page: 'analytics',
+      label: 'Analytics',
+      icon: <ChartBar size={20} />,
+    },
+    {
+      page: 'profile',
+      label: 'Profile',
+      icon: <User size={20} />,
+    },
   ]
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
   return (
-    <div
-      className={`bg-gray-800 text-white h-screen transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <div className={`flex items-center space-x-3 ${isCollapsed ? 'hidden' : ''}`}>
-            <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
-              <User className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="font-semibold">{user?.name || 'Admin User'}</p>
-              <p className="text-xs text-gray-400">{user?.role || 'Administrator'}</p>
-            </div>
+    <div className="bg-card border-r border-border h-full flex flex-col">
+      {/* Header */}
+      <div className="p-6 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <BookOpen size={18} className="text-primary-foreground" />
           </div>
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 hover:bg-gray-700 rounded"
-          >
-            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-          </button>
+          <div>
+            <h1 className="font-bold text-foreground">BlogCraft</h1>
+            <p className="text-xs text-muted-foreground">Content Management</p>
+          </div>
+        </div>
+      </div>
+
+      {/* User Info */}
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+            <User size={18} className="text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-foreground truncate">
+              {profile?.name || 'Blog Author'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {profile?.email || 'author@blogcraft.app'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4">
+        <div className="space-y-2">
+          {navItems.map((item) => {
+            const isActive = currentPage === item.page
+            return (
+              <Button
+                key={item.page}
+                variant={isActive ? 'default' : 'ghost'}
+                className={`w-full justify-start h-11 ${
+                  isActive 
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+                onClick={() => onNavigate(item.page)}
+              >
+                <span className="mr-3">{item.icon}</span>
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <Badge 
+                    variant={isActive ? 'outline' : 'secondary'} 
+                    className={`ml-2 ${
+                      isActive 
+                        ? 'border-primary-foreground/20 text-primary-foreground' 
+                        : ''
+                    }`}
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </Button>
+            )
+          })}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-indigo-600 text-white'
-                    : 'hover:bg-gray-700 text-gray-300'
-                }`
-              }
-            >
-              {item.icon}
-              {!isCollapsed && <span>{item.label}</span>}
-            </NavLink>
-          ))}
-        </nav>
+        <Separator className="my-4" />
 
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-gray-700 text-gray-300 transition-colors"
-          >
-            <LogOut className="h-5 w-5" />
-            {!isCollapsed && <span>Logout</span>}
-          </button>
+        {/* Quick Stats */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Quick Stats
+          </p>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Published</span>
+              <span className="text-success font-medium">{publishedCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Drafts</span>
+              <span className="text-muted-foreground font-medium">{draftCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Scheduled</span>
+              <span className="text-accent font-medium">{scheduledCount}</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-border">
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">
+            Total Posts: <span className="font-medium">{(posts || []).length}</span>
+          </p>
         </div>
       </div>
     </div>
   )
 }
+
+export default Sidebar

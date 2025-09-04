@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        /* Aura Background Effects */
+        .aura-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff0000;
+            text-decoration: none;
+        }
+        
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+            transform: translateY(-2px);
+        }
+        
+        /* Main Content */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: rgba(15, 15, 15, 0.5);
+            padding: 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #fff;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .sidebar-item.active {
+            background: rgba(255, 0, 0, 0.2);
+            border-left: 3px solid #ff0000;
+        }
+        
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .video-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.2);
+        }
+        
+        .video-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 0, 0, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .video-card:hover::before {
+            opacity: 1;
+        }
+        
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+        }
+        
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .video-card:hover .video-thumbnail img {
+            transform: scale(1.1);
+        }
+        
+        .video-duration {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .video-info {
+            padding: 15px;
+        }
+        
+        .video-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        
+        .channel-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ff0000;
+        }
+        
+        /* Trending Section */
+        .trending-banner {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trending-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+        
+        .trending-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .trending-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .trending-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        /* History Section */
+        .history-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .history-thumb {
+            width: 160px;
+            aspect-ratio: 16/9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .history-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .history-info {
+            flex: 1;
+        }
+        
+        .history-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .history-meta {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        
+        .history-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .history-progress-bar {
+            height: 100%;
+            background: #ff0000;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #ff0000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Aura Effects */
+        .aura-particle {
+            position: fixed;
+            pointer-events: none;
+            width: 4px;
+            height: 4px;
+            background: #ff0000;
+            border-radius: 50%;
+            opacity: 0;
+            animation: aura-float 10s infinite;
+        }
+        
+        @keyframes aura-float {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100vh) scale(0);
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(100px, -100vh) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="aura-canvas" id="auraCanvas"></canvas>
+    
+    <header class="header">
+        <a href="/youtube-aura" class="logo">
+            <span>🎬</span>
+            <span>YouTube Aura</span>
+        </a>
+        
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search for videos...">
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="toggleTheme()">
+                <span>🌓</span>
+                <span>Theme</span>
+            </button>
+            <a href="/admin" class="nav-btn">
+                <span>⚙️</span>
+                <span>Admin</span>
+            </a>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Menu</div>
+                <a href="#home" class="sidebar-item active" data-section="home">
+                    <span>🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="#trending" class="sidebar-item" data-section="trending">
+                    <span>🔥</span>
+                    <span>Trending</span>
+                </a>
+                <a href="#subscriptions" class="sidebar-item" data-section="subscriptions">
+                    <span>📺</span>
+                    <span>Subscriptions</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">Library</div>
+                <a href="#history" class="sidebar-item" data-section="history">
+                    <span>📜</span>
+                    <span>History</span>
+                </a>
+                <a href="#playlists" class="sidebar-item" data-section="playlists">
+                    <span>📋</span>
+                    <span>Playlists</span>
+                </a>
+                <a href="#liked" class="sidebar-item" data-section="liked">
+                    <span>👍</span>
+                    <span>Liked Videos</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">Categories</div>
+                <a href="#music" class="sidebar-item" data-section="music">
+                    <span>🎵</span>
+                    <span>Music</span>
+                </a>
+                <a href="#gaming" class="sidebar-item" data-section="gaming">
+                    <span>🎮</span>
+                    <span>Gaming</span>
+                </a>
+                <a href="#news" class="sidebar-item" data-section="news">
+                    <span>📰</span>
+                    <span>News</span>
+                </a>
+            </div>
+        </aside>
+        
+        <main class="content" id="content">
+            <!-- Content will be loaded dynamically -->
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading amazing content...</p>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Enhanced Aura Canvas Animation with WebGL fallback
+        const canvas = document.getElementById('auraCanvas');
+        let renderer;
+        
+        // Try WebGL first, fallback to 2D
+        try {
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                renderer = new WebGLAuraRenderer(canvas, gl);
+            }
+        } catch (e) {
+            console.log('WebGL not available, using 2D canvas');
+        }
+        
+        if (!renderer) {
+            renderer = new Canvas2DAuraRenderer(canvas);
+        }
+        
+        // Canvas2D Renderer
+        class Canvas2DAuraRenderer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.mouseX = 0;
+                this.mouseY = 0;
+                
+                this.resize();
+                this.initParticles();
+                this.setupEventListeners();
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            
+            initParticles() {
+                const particleCount = Math.min(150, window.innerWidth / 10);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push(new AuraParticle());
+                }
+            }
+            
+            setupEventListeners() {
+                window.addEventListener('resize', () => this.resize());
+                
+                // Track mouse for interactive effects
+                window.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX;
+                    this.mouseY = e.clientY;
+                });
+            }
+            
+            animate() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update and draw particles
+                this.particles.forEach(particle => {
+                    particle.update(this.mouseX, this.mouseY);
+                    particle.draw(this.ctx);
+                });
+                
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        
+        // Enhanced Particle with mouse interaction
+        class AuraParticle {
+            constructor() {
+                this.reset();
+                this.color = `hsl(${Math.random() * 60}, 100%, 50%)`; // Red to yellow spectrum
+            }
+            
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.5;
+                this.life = 1;
+            }
+            
+            update(mouseX, mouseY) {
+                // Mouse interaction
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    const force = (100 - distance) / 100;
+                    this.speedX += (dx / distance) * force * 0.1;
+                    this.speedY += (dy / distance) * force * 0.1;
+                }
+                
+                // Apply physics
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                // Damping
+                this.speedX *= 0.99;
+                this.speedY *= 0.99;
+                
+                // Life cycle
+                this.life -= 0.005;
+                this.opacity = this.life * 0.8;
+                
+                // Wrap around screen
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+                
+                // Reset if dead
+                if (this.life <= 0) {
+                    this.reset();
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        // Start animation
+        renderer.animate();
+        
+        // Content Management
+        const content = document.getElementById('content');
+        const searchInput = document.getElementById('searchInput');
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        
+        // Sidebar navigation
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                loadSection(item.dataset.section);
+            });
+        });
+        
+        // Enhanced content management with performance optimization
+        const ContentManager = {
+            cache: new Map(),
+            activeRequests: new Map(),
+            
+            async loadSection(section) {
+                // Check cache first
+                const cacheKey = `section_${section}_${Math.floor(Date.now() / 300000)}`;
+                if (this.cache.has(cacheKey)) {
+                    return this.displayContent(this.cache.get(cacheKey));
+                }
+                
+                // Prevent duplicate requests
+                if (this.activeRequests.has(section)) {
+                    return this.activeRequests.get(section);
+                }
+                
+                const content = document.getElementById('content');
+                content.innerHTML = this.generateLoader();
+                
+                const request = this.fetchSection(section)
+                    .then(data => {
+                        this.cache.set(cacheKey, data);
+                        this.displayContent(data);
+                        
+                        // Cleanup old cache
+                        if (this.cache.size > 20) {
+                            const firstKey = this.cache.keys().next().value;
+                            this.cache.delete(firstKey);
+                        }
+                    })
+                    .finally(() => {
+                        this.activeRequests.delete(section);
+                    });
+                
+                this.activeRequests.set(section, request);
+                return request;
+            },
+            
+            async fetchSection(section) {
+                switch(section) {
+                    case 'home':
+                        return await loadHome();
+                    case 'trending':
+                        return await loadTrending();
+                    case 'history':
+                        return await loadHistory();
+                    default:
+                        return await loadCategory(section);
+                }
+            },
+            
+            displayContent(html) {
+                const content = document.getElementById('content');
+                content.innerHTML = html;
+                
+                // Initialize lazy loading for new content
+                this.initLazyLoading();
+                
+                // Setup video card interactions
+                this.setupVideoCards();
+            },
+            
+            initLazyLoading() {
+                const images = document.querySelectorAll('img[data-src]');
+                const imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.add('loaded');
+                            imageObserver.unobserve(img);
+                        }
+                    });
+                }, {
+                    rootMargin: '100px'
+                });
+                
+                images.forEach(img => imageObserver.observe(img));
+            },
+            
+            setupVideoCards() {
+                document.querySelectorAll('.video-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        this.preloadVideo(card.dataset.videoId);
+                    });
+                });
+            },
+            
+            preloadVideo(videoId) {
+                // Preload video metadata
+                const link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+                document.head.appendChild(link);
+            },
+            
+            generateLoader() {
+                return `
+                    <div class="loading">
+                        <div class="aura-loader">
+                            <div class="loader-ring"></div>
+                            <div class="loader-ring"></div>
+                            <div class="loader-ring"></div>
+                        </div>
+                        <p>Loading immersive content...</p>
+                    </div>
+                `;
+            }
+        };
+        
+        // Enhanced search with debouncing and caching
+        const SearchManager = {
+            cache: new Map(),
+            searchTimeout: null,
+            
+            init() {
+                const searchInput = document.getElementById('searchInput');
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(this.searchTimeout);
+                    
+                    const query = e.target.value.trim();
+                    
+                    if (!query) {
+                        ContentManager.loadSection('home');
+                        return;
+                    }
+                    
+                    // Show searching indicator
+                    this.showSearching();
+                    
+                    this.searchTimeout = setTimeout(() => {
+                        this.performSearch(query);
+                    }, 300); // 300ms debounce
+                });
+            },
+            
+            async performSearch(query) {
+                // Check cache
+                if (this.cache.has(query)) {
+                    this.displayResults(this.cache.get(query));
+                    return;
+                }
+                
+                try {
+                    const results = await this.searchVideos(query);
+                    this.cache.set(query, results);
+                    
+                    // Limit cache size
+                    if (this.cache.size > 50) {
+                        const firstKey = this.cache.keys().next().value;
+                        this.cache.delete(firstKey);
+                    }
+                    
+                    this.displayResults(results);
+                } catch (error) {
+                    this.showError(error);
+                }
+            },
+            
+            async searchVideos(query) {
+                const response = await fetch(`/api/youtube-aura/search?q=${encodeURIComponent(query)}&maxResults=20`);
+                if (!response.ok) throw new Error('Search failed');
+                return await response.json();
+            },
+            
+            displayResults(data) {
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="section-header">
+                        <h1 class="section-title">Search Results</h1>
+                    </div>
+                    <div class="video-grid" id="videoGrid">
+                        ${data.items.map(item => this.createVideoCard({
+                            id: item.id.videoId,
+                            title: item.snippet.title,
+                            thumbnail: item.snippet.thumbnails.medium.url,
+                            channel: item.snippet.channelTitle,
+                            views: Math.floor(Math.random() * 1000000),
+                            duration: this.formatDuration(Math.floor(Math.random() * 3600))
+                        })).join('')}
+                    </div>
+                `;
+                
+                ContentManager.initLazyLoading();
+                ContentManager.setupVideoCards();
+            },
+            
+            createVideoCard(video) {
+                return `
+                    <div class="video-card" data-video-id="${video.id}" onclick="playVideo('${video.id}')">
+                        <div class="video-thumbnail">
+                            <img data-src="${video.thumbnail}" alt="${this.escapeHtml(video.title)}">
+                            <span class="video-duration">${video.duration}</span>
+                            <div class="video-preview">
+                                <button class="preview-btn" onclick="event.stopPropagation(); quickPreview('${video.id}')">
+                                    <span>👁️</span> Quick Look
+                                </button>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title">${this.escapeHtml(video.title)}</h3>
+                            <div class="video-meta">
+                                <div class="channel-avatar"></div>
+                                <span>${this.escapeHtml(video.channel)}</span>
+                                <span>•</span>
+                                <span>${this.formatViews(video.views)} views</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            showSearching() {
+                // Add visual feedback for searching
+                document.getElementById('content').classList.add('searching');
+            },
+            
+            showError(error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error-message">
+                        <p>Search failed: ${error.message}</p>
+                        <button onclick="ContentManager.loadSection('home')">Go Home</button>
+                    </div>
+                `;
+            },
+            
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+                return `${minutes}:${secs.toString().padStart(2, '0')}`;
+            },
+            
+            formatViews(views) {
+                if (views >= 1000000) return (views / 1000000).toFixed(1) + 'M';
+                if (views >= 1000) return (views / 1000).toFixed(1) + 'K';
+                return views.toString();
+            },
+            
+            escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        };
+        
+        // Enhanced video player with Aura effects
+        async function playVideo(videoId) {
+            // Show loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'aura-loading-overlay';
+            loadingOverlay.innerHTML = `
+                <div class="aura-spinner"></div>
+                <p>Creating immersive experience...</p>
+            `;
+            document.body.appendChild(loadingOverlay);
+            
+            try {
+                // Create enhanced embed
+                const response = await fetch('/api/embeds/youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoId: videoId,
+                        template: 'youtube-aura',
+                        features: {
+                            autoplay: true,
+                            controls: true,
+                            analytics: true,
+                            aura: true
+                        },
+                        customization: {
+                            experimental: {
+                                aura: true,
+                                particles: true,
+                                immersive: true,
+                            }
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Navigate to embed
+                    window.location.href = data.previewUrl;
+                }
+            } catch (error) {
+                console.error('Failed to create embed:', error);
+                alert('Failed to load video. Please try again.');
+            } finally {
+                loadingOverlay.remove();
+            }
+        }
+        
+        // Quick preview in modal
+        function quickPreview(videoId) {
+            const modal = document.createElement('div');
+            modal.className = 'quick-preview-modal';
+            modal.innerHTML = `
+                <div class="preview-container">
+                    <button class="close-preview" onclick="this.parentElement.parentElement.remove()">×</button>
+                    <iframe 
+                        src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&modestbranding=1"
+                        frameborder="0"
+                        allow="autoplay; encrypted-media"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Initialize search
+        SearchManager.init();
+        
+        // Initialize sidebar
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                ContentManager.loadSection(item.dataset.section);
+            });
+        });
+        
+        // Load initial content
+        ContentManager.loadSection('home');
+    </script>
+</body>
+</html>

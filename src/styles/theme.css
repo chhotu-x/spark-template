@@ -63,6 +63,7 @@
 @import '@radix-ui/colors/slate-dark.css' layer(base);
 @import '@radix-ui/colors/slate-alpha.css' layer(base);
 @import '@radix-ui/colors/slate-dark-alpha.css' layer(base);
+@import '@radix-ui/colors/sage.css' layer(base);
 
 @import 'tailwindcss/theme' layer(theme);
 
@@ -252,6 +253,17 @@
     --font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       "Liberation Mono", "Courier New", monospace;
     --font-family: var(--font-sans-serif);
+
+    /* YouTube Embed Theme Variables */
+    --youtube-red: #ff0000;
+    --youtube-dark: #282828;
+    --youtube-hover: #cc0000;
+
+    /* Experimental Features */
+    --aura-glow: rgba(102, 126, 234, 0.3);
+    --aura-pulse: rgba(255, 0, 0, 0.2);
+    --experimental-bg: #1a1a2e;
+    --experimental-accent: #4ecdc4;
   }
 
   #spark-app.dark-theme {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,7 @@ export default function ContentEditorInsights({
   const { debounce } = usePerformance()
   const [aiSuggestions, setAiSuggestions] = useState<any>(null)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const debouncedGenerateAIRef = useRef<any>(null)
 
   // Analyze content with debouncing for performance
   const analysis = useMemo(() => {
@@ -57,28 +58,47 @@ export default function ContentEditorInsights({
     return analyzeContent(content, title, tags, metaDescription)
   }, [content, title, tags, metaDescription, analyzeContent])
 
-  // Debounced AI enhancement generation
-  const debouncedGenerateAI = debounce(async (content: string) => {
-    if (content.trim().length < 100) return // Skip for very short content
+  // Create debounced function once with useCallback
+  const createDebouncedAI = useCallback(() => {
+    if (debouncedGenerateAIRef.current?.cancel) {
+      debouncedGenerateAIRef.current.cancel()
+    }
     
-    setIsGeneratingAI(true)
-    try {
-      const suggestions = await generateAIEnhancements(content)
-      setAiSuggestions(suggestions)
-      onChange?.(suggestions)
-    } catch (error) {
-      console.error('Failed to generate AI suggestions:', error)
-    } finally {
-      setIsGeneratingAI(false)
-    }
-  }, 2000)
+    debouncedGenerateAIRef.current = debounce(async (contentToAnalyze: string) => {
+      if (contentToAnalyze.trim().length < 100) return
+      
+      setIsGeneratingAI(true)
+      try {
+        const suggestions = await generateAIEnhancements(contentToAnalyze)
+        setAiSuggestions(suggestions)
+        onChange?.(suggestions)
+      } catch (error) {
+        console.error('Failed to generate AI suggestions:', error)
+      } finally {
+        setIsGeneratingAI(false)
+      }
+    }, 2000)
+    
+    return debouncedGenerateAIRef.current
+  }, [debounce, generateAIEnhancements, onChange])
 
-  // Generate AI suggestions when content changes significantly
+  // Initialize debounced function
   useEffect(() => {
-    if (content.length > 100) {
-      debouncedGenerateAI(content)
+    createDebouncedAI()
+    
+    return () => {
+      if (debouncedGenerateAIRef.current?.cancel) {
+        debouncedGenerateAIRef.current.cancel()
+      }
     }
-  }, [content, debouncedGenerateAI])
+  }, [createDebouncedAI])
+
+  // Generate AI suggestions when content changes
+  useEffect(() => {
+    if (content.length > 100 && debouncedGenerateAIRef.current) {
+      debouncedGenerateAIRef.current(content)
+    }
+  }, [content])
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
@@ -95,9 +115,13 @@ export default function ContentEditorInsights({
     }
   }
 
-  const topKeywords = Object.entries(analysis.keywordDensity)
-    .slice(0, 5)
-    .map(([word, density]) => ({ word, density }))
+  // Memoize top keywords calculation
+  const topKeywords = useMemo(() => 
+    Object.entries(analysis.keywordDensity)
+      .slice(0, 5)
+      .map(([word, density]) => ({ word, density })),
+    [analysis.keywordDensity]
+  )
 
   return (
     <div className="space-y-6">
@@ -358,7 +382,11 @@ export default function ContentEditorInsights({
               ) : (
                 <div className="text-center py-8">
                   <Button
-                    onClick={() => debouncedGenerateAI(content)}
+                    onClick={() => {
+                      if (debouncedGenerateAIRef.current) {
+                        debouncedGenerateAIRef.current(content)
+                      }
+                    }}
                     disabled={isGeneratingAI}
                     variant="outline"
                     className="gap-2"

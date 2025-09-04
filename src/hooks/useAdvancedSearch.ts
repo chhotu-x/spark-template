@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { usePerformance } from './usePerformance'
 
 interface SearchOptions {
@@ -30,6 +30,7 @@ interface SearchableItem {
  */
 export function useAdvancedSearch<T extends SearchableItem>(items: T[]) {
   const { memoize, debounce } = usePerformance()
+  const searchCacheRef = useRef<Map<string, number>>(new Map())
   
   const [searchOptions, setSearchOptions] = useState<SearchOptions>({
     searchTerm: '',
@@ -40,58 +41,91 @@ export function useAdvancedSearch<T extends SearchableItem>(items: T[]) {
     sortOrder: 'desc'
   })
 
-  // Debounced search term update
-  const debouncedSetSearchTerm = debounce((term: string) => {
-    setSearchOptions(prev => ({ ...prev, searchTerm: term }))
-  }, 300)
+  // Debounced search term update with cancel support
+  const debouncedSetSearchTerm = useMemo(
+    () => debounce((term: string) => {
+      setSearchOptions(prev => ({ ...prev, searchTerm: term }))
+    }, 300),
+    [debounce]
+  )
 
-  // Advanced text search with fuzzy matching
+  // Optimized fuzzy matching with caching
   const fuzzyMatch = useCallback((text: string, searchTerm: string): number => {
+    const cacheKey = `${text.substring(0, 50)}_${searchTerm}`
+    if (searchCacheRef.current.has(cacheKey)) {
+      return searchCacheRef.current.get(cacheKey)!
+    }
+
     const term = searchTerm.toLowerCase()
     const content = text.toLowerCase()
     
     // Exact match gets highest score
     if (content.includes(term)) {
-      return content.indexOf(term) === 0 ? 100 : 80
+      const score = content.indexOf(term) === 0 ? 100 : 80
+      searchCacheRef.current.set(cacheKey, score)
+      return score
     }
     
-    // Character-by-character fuzzy matching
+    // Optimized character-by-character fuzzy matching
     let score = 0
     let termIndex = 0
+    let lastMatchIndex = -1
     
     for (let i = 0; i < content.length && termIndex < term.length; i++) {
       if (content[i] === term[termIndex]) {
-        score += 1
+        // Bonus for consecutive matches
+        score += (i - lastMatchIndex === 1) ? 2 : 1
+        lastMatchIndex = i
         termIndex++
       }
     }
     
-    return termIndex === term.length ? (score / term.length) * 60 : 0
+    const finalScore = termIndex === term.length ? (score / term.length) * 60 : 0
+    
+    // Cache cleanup
+    if (searchCacheRef.current.size > 1000) {
+      searchCacheRef.current.clear()
+    }
+    searchCacheRef.current.set(cacheKey, finalScore)
+    
+    return finalScore
   }, [])
 
-  // Memoized filtering and sorting
+  // Optimized filtering and sorting with better memoization
   const filteredAndSortedItems = useMemo(() => {
+    const cacheKey = `search-${JSON.stringify(searchOptions)}-${items.length}`
+    
     return memoize(
-      `search-${JSON.stringify(searchOptions)}-${items.length}`,
+      cacheKey,
       () => {
         let filtered = [...items]
 
-        // Text search
+        // Text search with early termination
         if (searchOptions.searchTerm) {
-          filtered = filtered
-            .map(item => ({
-              item,
-              score: Math.max(
-                fuzzyMatch(item.title, searchOptions.searchTerm),
-                fuzzyMatch(item.content, searchOptions.searchTerm),
-                item.tags.reduce((max, tag) => 
-                  Math.max(max, fuzzyMatch(tag, searchOptions.searchTerm)), 0
-                )
-              )
-            }))
+          const searchResults = filtered
+            .map(item => {
+              const titleScore = fuzzyMatch(item.title, searchOptions.searchTerm)
+              if (titleScore === 100) return { item, score: titleScore } // Early return for exact matches
+              
+              const contentScore = fuzzyMatch(item.content.substring(0, 500), searchOptions.searchTerm) // Limit content search
+              const tagScore = Math.max(...item.tags.map(tag => 
+                fuzzyMatch(tag, searchOptions.searchTerm)
+              ), 0)
+              
+              return {
+                item,
+                score: Math.max(titleScore, contentScore * 0.8, tagScore * 0.9)
+              }
+            })
             .filter(({ score }) => score > 20)
-            .sort((a, b) => b.score - a.score)
-            .map(({ item }) => item)
+          
+          // Sort by score only if we have results
+          if (searchResults.length > 0) {
+            searchResults.sort((a, b) => b.score - a.score)
+            filtered = searchResults.map(({ item }) => item)
+          } else {
+            filtered = []
+          }
         }
 
         // Tag filtering
@@ -167,7 +201,7 @@ export function useAdvancedSearch<T extends SearchableItem>(items: T[]) {
         return filtered
       },
       60000 // Cache for 1 minute
-    )
+    ) as T[]
   }, [items, searchOptions, memoize, fuzzyMatch])
 
   // Update search options
@@ -239,6 +273,12 @@ export function useAdvancedSearch<T extends SearchableItem>(items: T[]) {
     }
   }, [items])
 
+  // Cleanup on unmount
+  const cleanup = useCallback(() => {
+    debouncedSetSearchTerm.cancel()
+    searchCacheRef.current.clear()
+  }, [debouncedSetSearchTerm])
+
   return {
     searchOptions,
     filteredAndSortedItems,
@@ -254,6 +294,7 @@ export function useAdvancedSearch<T extends SearchableItem>(items: T[]) {
       searchOptions.status.length > 0 ||
       searchOptions.dateRange.start ||
       searchOptions.dateRange.end
-    )
+    ),
+    cleanup
   }
 }

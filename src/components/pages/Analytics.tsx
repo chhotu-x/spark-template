@@ -3,80 +3,89 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
-import { BarChart3, TrendingUp, Globe, Users, Calendar, Download } from '@phosphor-icons/react'
+import { ChartBar, TrendingUp, Eye, Users, Calendar, Download, BookOpen, Tag } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
-interface ShortenedLink {
+interface BlogPost {
   id: string
-  originalUrl: string
-  shortCode: string
-  title?: string
-  clicks: number
+  title: string
+  content: string
+  status: 'draft' | 'published' | 'scheduled'
+  views: number
   createdAt: string
+  updatedAt: string
+  tags: string[]
+  readTime: number
 }
 
 export default function Analytics() {
-  const [links] = useKV<ShortenedLink[]>('shortened-links', [])
+  const [posts] = useKV<BlogPost[]>('blog-posts', [])
 
-  const totalClicks = links.reduce((sum, link) => sum + link.clicks, 0)
-  const totalLinks = links.length
-  const avgClicksPerLink = totalLinks > 0 ? Math.round(totalClicks / totalLinks) : 0
+  const publishedPosts = (posts || []).filter(post => post.status === 'published')
+  const totalViews = publishedPosts.reduce((sum, post) => sum + (post.views || 0), 0)
+  const averageReadTime = publishedPosts.length > 0 
+    ? publishedPosts.reduce((sum, post) => sum + (post.readTime || 5), 0) / publishedPosts.length 
+    : 0
 
-  const topLinks = [...links]
-    .sort((a, b) => b.clicks - a.clicks)
+  // Generate mock analytics data for demo purposes
+  const viewsData = [
+    { name: 'Mon', views: 45, readers: 32 },
+    { name: 'Tue', views: 52, readers: 41 },
+    { name: 'Wed', views: 48, readers: 38 },
+    { name: 'Thu', views: 61, readers: 47 },
+    { name: 'Fri', views: 55, readers: 43 },
+    { name: 'Sat', views: 38, readers: 29 },
+    { name: 'Sun', views: 42, readers: 34 },
+  ]
+
+  const topPosts = publishedPosts
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, 5)
 
-  const generateDailyData = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    return days.map(day => ({
-      day,
-      clicks: Math.floor(Math.random() * 50) + 10
+  const tagData = (posts || []).reduce((acc, post) => {
+    post.tags?.forEach(tag => {
+      acc[tag] = (acc[tag] || 0) + (post.views || 0)
+    })
+    return acc
+  }, {} as Record<string, number>)
+
+  const topTags = Object.entries(tagData)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 6)
+    .map(([name, views], index) => ({
+      name,
+      views,
+      color: `hsl(${index * 60}, 70%, 50%)`
     }))
-  }
-
-  const generateCountryData = () => {
-    const countries = [
-      { country: 'United States', clicks: Math.floor(Math.random() * 200) + 100, code: 'US' },
-      { country: 'United Kingdom', clicks: Math.floor(Math.random() * 150) + 50, code: 'GB' },
-      { country: 'Germany', clicks: Math.floor(Math.random() * 120) + 40, code: 'DE' },
-      { country: 'France', clicks: Math.floor(Math.random() * 100) + 30, code: 'FR' },
-      { country: 'Canada', clicks: Math.floor(Math.random() * 80) + 20, code: 'CA' },
-    ]
-    return countries.sort((a, b) => b.clicks - a.clicks)
-  }
-
-  const generateReferrerData = () => {
-    return [
-      { name: 'Direct', value: 45, color: '#0369a1' },
-      { name: 'Social Media', value: 25, color: '#0891b2' },
-      { name: 'Email', value: 15, color: '#0d9488' },
-      { name: 'Search', value: 10, color: '#059669' },
-      { name: 'Other', value: 5, color: '#65a30d' }
-    ]
-  }
-
-  const dailyData = generateDailyData()
-  const countryData = generateCountryData()
-  const referrerData = generateReferrerData()
 
   const exportData = () => {
-    const csvContent = [
-      'Short Code,Original URL,Title,Clicks,Created Date',
-      ...links.map(link => 
-        `${link.shortCode},"${link.originalUrl}","${link.title || ''}",${link.clicks},${link.createdAt}`
-      )
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
+    const data = {
+      summary: {
+        totalPosts: (posts || []).length,
+        publishedPosts: publishedPosts.length,
+        totalViews,
+        averageReadTime: Math.round(averageReadTime)
+      },
+      posts: publishedPosts.map(post => ({
+        title: post.title,
+        views: post.views || 0,
+        readTime: post.readTime,
+        createdAt: post.createdAt,
+        tags: post.tags
+      })),
+      exportedAt: new Date().toISOString()
+    }
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'linkcraft-analytics.csv'
+    a.download = `blog-analytics-${new Date().toISOString().split('T')[0]}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -84,9 +93,9 @@ export default function Analytics() {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Analytics</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Blog Analytics</h1>
             <p className="text-muted-foreground">
-              Track performance and gain insights from your shortened links.
+              Track performance and gain insights from your blog content.
             </p>
           </div>
           <Button onClick={exportData} variant="outline" className="self-start sm:self-auto">
@@ -98,88 +107,82 @@ export default function Analytics() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
-              <BarChart3 size={16} className="text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Posts</CardTitle>
+              <BookOpen size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{totalClicks}</div>
+              <div className="text-2xl font-bold text-foreground">{(posts || []).length}</div>
               <p className="text-xs text-muted-foreground">
-                +12% from last week
+                {publishedPosts.length} published
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Links</CardTitle>
-              <TrendingUp size={16} className="text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Views</CardTitle>
+              <Eye size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{totalLinks}</div>
+              <div className="text-2xl font-bold text-foreground">{totalViews.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
-                Active shortened URLs
+                {publishedPosts.length > 0 ? Math.round(totalViews / publishedPosts.length) : 0} avg per post
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg. Clicks/Link</CardTitle>
-              <Users size={16} className="text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{avgClicksPerLink}</div>
-              <p className="text-xs text-muted-foreground">
-                Performance metric
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Read Time</CardTitle>
               <Calendar size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                {links.filter(link => 
-                  new Date(link.createdAt).getMonth() === new Date().getMonth()
-                ).length}
+                {Math.round(averageReadTime)}m
               </div>
               <p className="text-xs text-muted-foreground">
-                Links created
+                Minutes per article
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Engagement</CardTitle>
+              <TrendingUp size={16} className="text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">94%</div>
+              <p className="text-xs text-muted-foreground">
+                Reader retention
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-4 lg:space-y-6">
-          <div className="overflow-x-auto">
-            <TabsList className="grid grid-cols-4 w-full min-w-[400px]">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="geography">Geography</TabsTrigger>
-              <TabsTrigger value="referrers">Referrers</TabsTrigger>
-              <TabsTrigger value="top-links">Top Links</TabsTrigger>
-            </TabsList>
-          </div>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="posts">Top Posts</TabsTrigger>
+            <TabsTrigger value="tags">Popular Tags</TabsTrigger>
+          </TabsList>
 
-          <TabsContent value="overview" className="space-y-4 lg:space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Daily Clicks</CardTitle>
-                  <CardDescription>
-                    Click activity over the past week
-                  </CardDescription>
+                  <CardTitle>Weekly Views</CardTitle>
+                  <CardDescription>Blog post views over the past week</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={dailyData}>
+                    <BarChart data={viewsData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="day" />
+                      <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="clicks" fill="oklch(0.45 0.15 250)" />
+                      <Bar dataKey="views" fill="#8884d8" />
+                      <Bar dataKey="readers" fill="#82ca9d" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -187,180 +190,151 @@ export default function Analytics() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Click Trends</CardTitle>
-                  <CardDescription>
-                    Performance trend over time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={dailyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="day" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="clicks" 
-                        stroke="oklch(0.70 0.15 50)" 
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="geography" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Geographic Distribution</CardTitle>
-                <CardDescription>
-                  Where your clicks are coming from
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {countryData.map((country, index) => (
-                    <div key={country.code} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-6 bg-muted rounded flex items-center justify-center">
-                          <span className="text-xs font-mono">{country.code}</span>
-                        </div>
-                        <span className="font-medium">{country.country}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-32">
-                          <Progress 
-                            value={(country.clicks / countryData[0].clicks) * 100} 
-                            className="h-2"
-                          />
-                        </div>
-                        <span className="text-sm font-medium w-12 text-right">
-                          {country.clicks}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="referrers" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Traffic Sources</CardTitle>
-                  <CardDescription>
-                    How users are finding your links
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={referrerData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {referrerData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Source Breakdown</CardTitle>
-                  <CardDescription>
-                    Detailed traffic source analysis
-                  </CardDescription>
+                  <CardTitle>Reader Engagement</CardTitle>
+                  <CardDescription>How readers interact with your content</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {referrerData.map((source) => (
-                      <div key={source.name} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: source.color }}
-                          />
-                          <span className="font-medium">{source.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {source.value}%
-                          </span>
-                          <Badge variant="secondary">
-                            {Math.round((source.value / 100) * totalClicks)} clicks
-                          </Badge>
-                        </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Read Completion</span>
+                        <span>78%</span>
                       </div>
-                    ))}
+                      <Progress value={78} className="h-2" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Return Readers</span>
+                        <span>62%</span>
+                      </div>
+                      <Progress value={62} className="h-2" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Bounce Rate</span>
+                        <span>15%</span>
+                      </div>
+                      <Progress value={15} className="h-2" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="top-links" className="space-y-6">
+          <TabsContent value="posts" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Top Performing Links</CardTitle>
+                <CardTitle>Top Performing Posts</CardTitle>
                 <CardDescription>
-                  Your most clicked shortened URLs
+                  Your most viewed blog posts
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {topLinks.length > 0 ? (
+                {topPosts.length > 0 ? (
                   <div className="space-y-4">
-                    {topLinks.map((link, index) => (
-                      <div key={link.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                    {topPosts.map((post, index) => (
+                      <div key={post.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
                         <div className="flex items-center gap-4">
                           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm">
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-foreground truncate">
-                              {link.title || link.originalUrl}
+                              {post.title}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              linkcraft.app/{link.shortCode}
+                              {new Date(post.createdAt).toLocaleDateString()} • {post.readTime}m read
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-foreground">{link.clicks}</p>
-                            <p className="text-xs text-muted-foreground">clicks</p>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-foreground">
+                            {(post.views || 0).toLocaleString()}
                           </div>
-                          <Badge variant="secondary">
-                            {totalClicks > 0 ? Math.round((link.clicks / totalClicks) * 100) : 0}%
-                          </Badge>
+                          <div className="text-xs text-muted-foreground">views</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <BarChart3 size={48} className="text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      No link data available yet. Create some links to see analytics.
-                    </p>
+                    <BookOpen size={48} className="text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No published posts yet</p>
                   </div>
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="tags" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tag Performance</CardTitle>
+                  <CardDescription>Most popular content categories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {topTags.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={topTags}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="views"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {topTags.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Tag size={48} className="text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No tags yet</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tag Rankings</CardTitle>
+                  <CardDescription>Views by content category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {topTags.map((tag, index) => (
+                      <div key={tag.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          <span className="font-medium">{tag.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {tag.views.toLocaleString()}
+                          </span>
+                          <Badge variant="secondary">
+                            #{index + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

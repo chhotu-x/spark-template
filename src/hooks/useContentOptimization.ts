@@ -1,4 +1,5 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useRef } from 'react'
+import { useLLM } from '@github/spark/hooks'
 
 interface ContentAnalysis {
   readabilityScore: number
@@ -23,6 +24,8 @@ interface SEOMetrics {
  * Advanced content optimization and SEO analysis hook
  */
 export function useContentOptimization() {
+  const { llm } = useLLM()
+  const keywordCacheRef = useRef<Map<string, Record<string, number>>>(new Map())
   
   // Calculate reading time based on average reading speed (200 wpm)
   const calculateReadingTime = useCallback((content: string): number => {
@@ -71,8 +74,14 @@ export function useContentOptimization() {
     return Math.max(1, count)
   }
 
-  // Calculate keyword density
+  // Optimized keyword density calculation with caching
   const calculateKeywordDensity = useCallback((content: string): Record<string, number> => {
+    // Check cache first
+    const cacheKey = content.substring(0, 100) // Use first 100 chars as cache key
+    if (keywordCacheRef.current.has(cacheKey)) {
+      return keywordCacheRef.current.get(cacheKey)!
+    }
+
     const words = content.toLowerCase()
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
@@ -81,21 +90,29 @@ export function useContentOptimization() {
     const wordCount: Record<string, number> = {}
     const totalWords = words.length
 
-    words.forEach(word => {
+    // Use a more efficient counting method
+    for (const word of words) {
       wordCount[word] = (wordCount[word] || 0) + 1
-    })
+    }
 
     const density: Record<string, number> = {}
-    Object.entries(wordCount).forEach(([word, count]) => {
-      density[word] = (count / totalWords) * 100
-    })
+    const sortedWords = Object.entries(wordCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+    
+    for (const [word, count] of sortedWords) {
+      density[word] = Math.round((count / totalWords) * 1000) / 10 // Round to 1 decimal
+    }
 
-    // Return top 10 keywords by density
-    return Object.fromEntries(
-      Object.entries(density)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 10)
-    )
+    // Cache the result
+    keywordCacheRef.current.set(cacheKey, density)
+    if (keywordCacheRef.current.size > 50) {
+      // Remove oldest entry
+      const firstKey = keywordCacheRef.current.keys().next().value
+      keywordCacheRef.current.delete(firstKey)
+    }
+
+    return density
   }, [])
 
   // Analyze sentence complexity
@@ -244,13 +261,13 @@ export function useContentOptimization() {
     calculateSEOScore
   ])
 
-  // Generate AI-powered content suggestions
+  // Fixed AI enhancement generation with proper API usage
   const generateAIEnhancements = useCallback(async (content: string, focus?: string) => {
     try {
-      const prompt = spark.llmPrompt`
+      const prompt = `
         Analyze this blog content and provide specific suggestions for improvement:
         
-        Content: ${content}
+        Content: ${content.substring(0, 1000)}... 
         ${focus ? `Focus area: ${focus}` : ''}
         
         Please provide:
@@ -261,8 +278,27 @@ export function useContentOptimization() {
         Format as JSON with arrays for each category.
       `
       
-      const response = await spark.llm(prompt, 'gpt-4o-mini', true)
-      return JSON.parse(response)
+      const response = await llm(prompt, { 
+        model: 'gpt-4o-mini',
+        json: true 
+      })
+      
+      // Parse response with validation
+      try {
+        const parsed = typeof response === 'string' ? JSON.parse(response) : response
+        return {
+          writing: parsed.writing || ['Consider varying sentence length for better flow'],
+          seo: parsed.seo || ['Add more descriptive subheadings'],
+          structure: parsed.structure || ['Include a clear conclusion section']
+        }
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError)
+        return {
+          writing: ['Consider varying sentence length for better flow'],
+          seo: ['Add more descriptive subheadings'],
+          structure: ['Include a clear conclusion section']
+        }
+      }
     } catch (error) {
       console.error('Failed to generate AI enhancements:', error)
       return {
@@ -271,7 +307,7 @@ export function useContentOptimization() {
         structure: ['Include a clear conclusion section']
       }
     }
-  }, [])
+  }, [llm])
 
   return {
     analyzeContent,
