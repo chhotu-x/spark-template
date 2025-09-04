@@ -6,9 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useKV } from '@github/spark/hooks'
-import { Plus, PencilSimple, Trash, Calendar, Clock, Eye, MagnifyingGlass } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, Calendar, Clock, Eye, MagnifyingGlass, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import ContentEditorInsights from '@/components/pages/ContentEditorInsights'
 import type { BlogPost, Page, NavigationProps } from '@/lib/types'
 
 export default function BlogManager({ onNavigate }: NavigationProps) {
@@ -135,89 +137,133 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
-              <Plus size={20} />
-              New Post
+              <Sparkle size={20} />
+              New Post with AI
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Blog Post</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkle className="h-5 w-5" />
+                Create New Blog Post with AI Insights
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Enter post title..."
-                />
-              </div>
+            
+            <Tabs defaultValue="editor" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="editor">Content Editor</TabsTrigger>
+                <TabsTrigger value="insights">AI Insights & Analytics</TabsTrigger>
+              </TabsList>
               
-              <div>
-                <label className="text-sm font-medium">Content</label>
-                <Textarea
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Write your post content..."
-                  rows={10}
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Excerpt (optional)</label>
-                <Textarea
-                  value={newExcerpt}
-                  onChange={(e) => setNewExcerpt(e.target.value)}
-                  placeholder="Brief description of the post..."
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Tags (comma-separated)</label>
-                <Input
-                  value={newTags}
-                  onChange={(e) => setNewTags(e.target.value)}
-                  placeholder="react, javascript, tutorial..."
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={newStatus} onValueChange={(value: any) => setNewStatus(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {newStatus === 'scheduled' && (
-                  <div>
-                    <label className="text-sm font-medium">Scheduled Date</label>
-                    <Input
-                      type="datetime-local"
-                      value={newScheduledAt}
-                      onChange={(e) => setNewScheduledAt(e.target.value)}
+              <TabsContent value="editor" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Title</label>
+                      <Input
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        placeholder="Enter post title..."
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Content</label>
+                      <Textarea
+                        value={newContent}
+                        onChange={(e) => setNewContent(e.target.value)}
+                        placeholder="Write your post content..."
+                        rows={12}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Excerpt (optional)</label>
+                      <Textarea
+                        value={newExcerpt}
+                        onChange={(e) => setNewExcerpt(e.target.value)}
+                        placeholder="Brief description of the post..."
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Tags (comma-separated)</label>
+                      <Input
+                        value={newTags}
+                        onChange={(e) => setNewTags(e.target.value)}
+                        placeholder="react, javascript, tutorial..."
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Status</label>
+                        <Select value={newStatus} onValueChange={(value: any) => setNewStatus(value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="published">Published</SelectItem>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {newStatus === 'scheduled' && (
+                        <div>
+                          <label className="text-sm font-medium">Scheduled Date</label>
+                          <Input
+                            type="datetime-local"
+                            value={newScheduledAt}
+                            onChange={(e) => setNewScheduledAt(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="border-l pl-4">
+                    <ContentEditorInsights
+                      content={newContent}
+                      title={newTitle}
+                      tags={newTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)}
+                      metaDescription={newExcerpt}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={createPost}>
+                    Create Post
+                  </Button>
+                </div>
+              </TabsContent>
               
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createPost}>
-                  Create Post
-                </Button>
-              </div>
-            </div>
+              <TabsContent value="insights" className="mt-4">
+                <div className="h-96">
+                  <ContentEditorInsights
+                    content={newContent}
+                    title={newTitle}
+                    tags={newTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)}
+                    metaDescription={newExcerpt}
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={createPost}>
+                    Create Post
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
