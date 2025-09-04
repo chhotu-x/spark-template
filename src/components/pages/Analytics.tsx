@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
-import { ChartBar, TrendingUp, Eye, Users, Calendar, Download, BookOpen, Tag } from '@phosphor-icons/react'
+import { ChartBar, TrendUp, Eye, Users, Calendar, Download, BookOpen, Tag } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
@@ -149,7 +149,7 @@ export default function Analytics() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Engagement</CardTitle>
-              <TrendingUp size={16} className="text-muted-foreground" />
+              <TrendUp size={16} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">94%</div>

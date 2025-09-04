@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useKV } from '@github/spark/hooks'
-import { Plus, Edit, Trash2, Calendar, Clock, Eye, Search } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, Calendar, Clock, Eye, MagnifyingGlass } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { BlogPost, Page, NavigationProps } from '@/lib/types'
 
@@ -34,6 +34,7 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
 
   // Filter posts based on search and status
   const filteredPosts = useMemo(() => {
+    if (!posts) return []
     return posts.filter(post => {
       const matchesSearch = searchTerm === '' || 
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,7 +68,7 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
       readTime: calculateReadTime(newContent)
     }
 
-    setPosts(prev => [...prev, newPost])
+    setPosts(prev => [...(prev || []), newPost])
     
     // Reset form
     setNewTitle('')
@@ -83,13 +84,13 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
 
   // Delete post
   const deletePost = (postId: string) => {
-    setPosts(prev => prev.filter(post => post.id !== postId))
+    setPosts(prev => (prev || []).filter(post => post.id !== postId))
     toast.success('Post deleted successfully')
   }
 
   // Update post status
   const updatePostStatus = (postId: string, status: BlogPost['status'], scheduledAt?: string) => {
-    setPosts(prev => prev.map(post => {
+    setPosts(prev => (prev || []).map(post => {
       if (post.id === postId) {
         return {
           ...post,
@@ -224,7 +225,7 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
       {/* Search and Filter Controls */}
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+          <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
           <Input
             placeholder="Search posts..."
             value={searchTerm}
@@ -313,7 +314,7 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
                       onClick={() => onNavigate('blog-post', post.id)}
                       className="gap-2"
                     >
-                      <Edit size={16} />
+                      <PencilSimple size={16} />
                       Edit
                     </Button>
                     
@@ -357,7 +358,7 @@ export default function BlogManager({ onNavigate }: NavigationProps) {
                       onClick={() => deletePost(post.id)}
                       className="gap-2"
                     >
-                      <Trash2 size={16} />
+                      <Trash size={16} />
                       Delete
                     </Button>
                   </div>

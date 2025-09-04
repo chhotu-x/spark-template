@@ -8,11 +8,11 @@ import {
   Eye, 
   Heart, 
   Share, 
-  TrendingUp, 
+  TrendUp, 
   Clock, 
   Users,
   Target,
-  Zap
+  Lightning
 } from '@phosphor-icons/react'
 
 /**
@@ -103,7 +103,7 @@ export default function AnalyticsDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
+            <Lightning className="h-5 w-5" />
             Performance Metrics
           </CardTitle>
           <CardDescription>
@@ -115,10 +115,10 @@ export default function AnalyticsDashboard() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Page Load Time</span>
-                <span className="font-medium">{formatTime(metrics.pageLoadTime)}</span>
+                <span className="font-medium">{formatTime(metrics?.pageLoadTime || 0)}</span>
               </div>
               <Progress 
-                value={Math.min((metrics.pageLoadTime / 3000) * 100, 100)} 
+                value={Math.min(((metrics?.pageLoadTime || 0) / 3000) * 100, 100)} 
                 className="h-2"
               />
             </div>
@@ -126,10 +126,10 @@ export default function AnalyticsDashboard() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Render Time</span>
-                <span className="font-medium">{formatTime(metrics.renderTime)}</span>
+                <span className="font-medium">{formatTime(metrics?.renderTime || 0)}</span>
               </div>
               <Progress 
-                value={Math.min((metrics.renderTime / 100) * 100, 100)} 
+                value={Math.min(((metrics?.renderTime || 0) / 100) * 100, 100)} 
                 className="h-2"
               />
             </div>
@@ -146,7 +146,7 @@ export default function AnalyticsDashboard() {
             </div>
           </div>
           
-          {metrics.memoryUsage && (
+          {metrics && metrics.memoryUsage && metrics.memoryUsage > 0 && (
             <div className="mt-4 p-3 bg-muted/50 rounded-lg">
               <div className="text-sm font-medium">Memory Usage</div>
               <div className="text-xs text-muted-foreground">
@@ -162,7 +162,7 @@ export default function AnalyticsDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+              <TrendUp className="h-5 w-5" />
               Popular Posts
             </CardTitle>
             <CardDescription>
