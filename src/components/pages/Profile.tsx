@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { User, Globe, FloppyDisk, Link, Article, BarChart3, Calendar } from '@phosphor-icons/react'
+import { User, Globe, FloppyDisk, Link, Article, ChartBar, Calendar } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -33,32 +33,52 @@ export default function Profile() {
   const [links] = useKV<any[]>('shortened-links', [])
   const [posts] = useKV<any[]>('blog-posts', [])
 
-  const [formData, setFormData] = useState(profile)
+  const [formData, setFormData] = useState(profile || {
+    name: '',
+    email: '',
+    bio: '',
+    website: '',
+    customDomain: '',
+    brandColor: '#3B82F6',
+    avatar: ''
+  })
 
   const handleSave = () => {
-    setProfile(formData)
-    toast.success('Profile updated successfully!')
+    if (formData.name && formData.email) {
+      setProfile(formData as UserProfile)
+      toast.success('Profile updated successfully!')
+    } else {
+      toast.error('Name and email are required!')
+    }
   }
 
   const handleReset = () => {
-    setFormData(profile)
+    setFormData(profile || {
+      name: '',
+      email: '',
+      bio: '',
+      website: '',
+      customDomain: '',
+      brandColor: '#3B82F6',
+      avatar: ''
+    })
     toast.success('Changes reset!')
   }
 
-  const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0)
-  const publishedPosts = posts.filter(post => post.status === 'published').length
+  const totalClicks = links?.reduce((sum, link) => sum + (link.clicks || 0), 0) || 0
+  const publishedPosts = posts?.filter(post => post.status === 'published').length || 0
 
   const accountStats = [
     {
       label: 'Links Created',
-      value: links.length,
+      value: links?.length || 0,
       icon: Link,
       color: 'text-primary'
     },
     {
       label: 'Total Clicks',
       value: totalClicks,
-      icon: BarChart3,
+      icon: ChartBar,
       color: 'text-accent'
     },
     {
@@ -104,7 +124,7 @@ export default function Profile() {
                     <Input
                       id="name"
                       placeholder="Your full name"
-                      value={formData.name}
+                      value={formData?.name || ''}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
                   </div>
@@ -114,7 +134,7 @@ export default function Profile() {
                       id="email"
                       type="email"
                       placeholder="your@email.com"
-                      value={formData.email}
+                      value={formData?.email || ''}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
                   </div>
@@ -125,12 +145,12 @@ export default function Profile() {
                   <Textarea
                     id="bio"
                     placeholder="Tell us about yourself..."
-                    value={formData.bio}
+                    value={formData?.bio || ''}
                     onChange={(e) => setFormData({...formData, bio: e.target.value})}
                     rows={4}
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formData.bio.length}/200 characters
+                    {(formData?.bio || '').length}/200 characters
                   </p>
                 </div>
 
@@ -140,7 +160,7 @@ export default function Profile() {
                     id="website"
                     type="url"
                     placeholder="https://yourwebsite.com"
-                    value={formData.website}
+                    value={formData?.website || ''}
                     onChange={(e) => setFormData({...formData, website: e.target.value})}
                   />
                 </div>
@@ -167,7 +187,7 @@ export default function Profile() {
                     <Input
                       id="custom-domain"
                       placeholder="links.yourdomain.com"
-                      value={formData.customDomain}
+                      value={formData?.customDomain || ''}
                       onChange={(e) => setFormData({...formData, customDomain: e.target.value})}
                       className="rounded-l-none"
                     />
@@ -183,12 +203,12 @@ export default function Profile() {
                     <Input
                       id="brand-color"
                       type="color"
-                      value={formData.brandColor}
+                      value={formData?.brandColor || '#3B82F6'}
                       onChange={(e) => setFormData({...formData, brandColor: e.target.value})}
                       className="w-20 h-10"
                     />
                     <Input
-                      value={formData.brandColor}
+                      value={formData?.brandColor || '#3B82F6'}
                       onChange={(e) => setFormData({...formData, brandColor: e.target.value})}
                       placeholder="#3b82f6"
                       className="flex-1"
@@ -204,16 +224,16 @@ export default function Profile() {
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: formData.brandColor }}
+                      style={{ backgroundColor: formData?.brandColor || '#3B82F6' }}
                     >
                       <Link size={20} className="text-white" />
                     </div>
                     <div>
                       <p className="font-medium text-foreground">
-                        {formData.name || 'Your Name'}
+                        {formData?.name || 'Your Name'}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formData.customDomain || 'linkcraft.app'}/yourlink
+                        {formData?.customDomain || 'linkcraft.app'}/yourlink
                       </p>
                     </div>
                   </div>
@@ -247,18 +267,18 @@ export default function Profile() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">
-                      {profile.name || 'Anonymous User'}
+                      {profile?.name || 'Anonymous User'}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {profile.email || 'No email set'}
+                      {profile?.email || 'No email set'}
                     </p>
                   </div>
-                  {profile.bio && (
+                  {profile?.bio && (
                     <p className="text-sm text-muted-foreground">
                       {profile.bio}
                     </p>
                   )}
-                  {profile.website && (
+                  {profile?.website && (
                     <Badge variant="outline" className="text-xs">
                       <Globe size={12} className="mr-1" />
                       Website
@@ -330,11 +350,11 @@ export default function Profile() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Links Created</span>
-                    <span className="text-sm">{links.length}/100</span>
+                    <span className="text-sm">{links?.length || 0}/100</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Blog Posts</span>
-                    <span className="text-sm">{posts.length}/10</span>
+                    <span className="text-sm">{posts?.length || 0}/10</span>
                   </div>
                   <Separator />
                   <Button variant="outline" size="sm" className="w-full">

@@ -15,7 +15,7 @@ export default function PublicBlog({ onNavigate }: NavigationProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null)
 
-  const publishedPosts = posts.filter(post => post.status === 'published')
+  const publishedPosts = posts?.filter(post => post.status === 'published') || []
   
   const filteredPosts = publishedPosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +123,7 @@ export default function PublicBlog({ onNavigate }: NavigationProps) {
                       <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                         <span>{publishedPosts.length} posts published</span>
                         <span>•</span>
-                        <span>Member since {new Date(posts[0]?.createdAt || Date.now()).getFullYear()}</span>
+                        <span>Member since {new Date(posts?.[0]?.createdAt || Date.now()).getFullYear()}</span>
                       </div>
                     </div>
                   </div>

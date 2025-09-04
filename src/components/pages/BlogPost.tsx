@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { useKV } from '@github/spark/hooks'
-import { ArrowLeft, Calendar, Clock, Eye, Save, Trash2, Share } from '@phosphor-icons/react'
+import { ArrowLeft, Calendar, Clock, Eye, FloppyDisk, Trash, Share } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { BlogPost, Page } from '@/lib/types'
 import { useBlogAnalytics } from '@/hooks/useBlogAnalytics'
@@ -23,7 +23,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
   
   // Current post
   const post = useMemo(() => 
-    posts.find(p => p.id === postId), 
+    posts?.find(p => p.id === postId), 
     [posts, postId]
   )
   
@@ -78,7 +78,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
       return
     }
 
-    setPosts(prev => prev.map(p => {
+    setPosts(prev => (prev || []).map(p => {
       if (p.id === postId) {
         return {
           ...p,
@@ -103,7 +103,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
   // Delete post
   const deletePost = () => {
     if (postId) {
-      setPosts(prev => prev.filter(p => p.id !== postId))
+      setPosts(prev => (prev || []).filter(p => p.id !== postId))
       toast.success('Post deleted successfully')
       onNavigate('blog')
     }
@@ -177,8 +177,8 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
     )
   }
 
-  const postViews = analytics.views[post.id] || 0
-  const postLikes = analytics.likes[post.id] || 0
+  const postViews = analytics?.views[post.id] || 0
+  const postLikes = analytics?.likes[post.id] || 0
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -201,7 +201,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
                 onClick={() => setIsEditing(true)}
                 className="gap-2"
               >
-                <Save size={16} />
+                <FloppyDisk size={16} />
                 Edit
               </Button>
               
@@ -219,7 +219,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
                 onClick={deletePost}
                 className="gap-2"
               >
-                <Trash2 size={16} />
+                <Trash size={16} />
                 Delete
               </Button>
             </>
@@ -242,7 +242,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
               </Button>
               
               <Button onClick={savePost} className="gap-2">
-                <Save size={16} />
+                <FloppyDisk size={16} />
                 Save Changes
               </Button>
             </>
@@ -402,7 +402,7 @@ export default function BlogPost({ postId, onNavigate }: BlogPostProps) {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-destructive">
-                    {analytics.shares[post.id] || 0}
+                    {analytics?.shares[post.id] || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Shares</div>
                 </div>

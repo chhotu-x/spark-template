@@ -23,21 +23,42 @@ export function useBlogAnalytics() {
 
   const [currentSession, setCurrentSession] = useKV<ViewSession | null>('current-session', null)
 
+  // Helper to get current analytics with defaults
+  const getAnalyticsWithDefaults = (prev: BlogAnalytics | undefined): BlogAnalytics => {
+    return prev || {
+      views: {},
+      likes: {},
+      comments: {},
+      shares: {},
+      readingTime: {},
+      popularTags: {},
+      dailyViews: {},
+      userEngagement: {
+        totalSessions: 0,
+        averageSessionTime: 0,
+        bounceRate: 0
+      }
+    }
+  }
+
   // Track post view
   const trackView = (postId: string) => {
     const today = new Date().toISOString().split('T')[0]
     
-    setAnalytics(prev => ({
-      ...prev,
-      views: {
-        ...prev.views,
-        [postId]: (prev.views[postId] || 0) + 1
-      },
-      dailyViews: {
-        ...prev.dailyViews,
-        [today]: (prev.dailyViews[today] || 0) + 1
+    setAnalytics(prev => {
+      const currentAnalytics = getAnalyticsWithDefaults(prev)
+      return {
+        ...currentAnalytics,
+        views: {
+          ...currentAnalytics.views,
+          [postId]: (currentAnalytics.views[postId] || 0) + 1
+        },
+        dailyViews: {
+          ...currentAnalytics.dailyViews,
+          [today]: (currentAnalytics.dailyViews[today] || 0) + 1
+        }
       }
-    }))
+    })
 
     // Start session tracking
     setCurrentSession({
@@ -48,25 +69,30 @@ export function useBlogAnalytics() {
 
   // Track reading time when user finishes reading
   const trackReadingTime = (postId: string, timeSpent: number) => {
-    setAnalytics(prev => ({
-      ...prev,
-      readingTime: {
-        ...prev.readingTime,
-        [postId]: [...(prev.readingTime[postId] || []), timeSpent]
+    setAnalytics(prev => {
+      const currentAnalytics = getAnalyticsWithDefaults(prev)
+      const currentTimes = currentAnalytics.readingTime[postId] || []
+      return {
+        ...currentAnalytics,
+        readingTime: {
+          ...currentAnalytics.readingTime,
+          [postId]: [...currentTimes, timeSpent]
+        }
       }
-    }))
+    })
 
     // End current session
     if (currentSession?.postId === postId) {
       const sessionTime = Date.now() - currentSession.startTime
       setAnalytics(prev => {
-        const totalSessions = prev.userEngagement.totalSessions + 1
-        const newAverageTime = ((prev.userEngagement.averageSessionTime * prev.userEngagement.totalSessions) + sessionTime) / totalSessions
+        const currentAnalytics = getAnalyticsWithDefaults(prev)
+        const totalSessions = currentAnalytics.userEngagement.totalSessions + 1
+        const newAverageTime = ((currentAnalytics.userEngagement.averageSessionTime * currentAnalytics.userEngagement.totalSessions) + sessionTime) / totalSessions
         
         return {
-          ...prev,
+          ...currentAnalytics,
           userEngagement: {
-            ...prev.userEngagement,
+            ...currentAnalytics.userEngagement,
             totalSessions,
             averageSessionTime: newAverageTime
           }
@@ -78,35 +104,42 @@ export function useBlogAnalytics() {
 
   // Track like
   const trackLike = (postId: string) => {
-    setAnalytics(prev => ({
-      ...prev,
-      likes: {
-        ...prev.likes,
-        [postId]: (prev.likes[postId] || 0) + 1
+    setAnalytics(prev => {
+      const currentAnalytics = getAnalyticsWithDefaults(prev)
+      return {
+        ...currentAnalytics,
+        likes: {
+          ...currentAnalytics.likes,
+          [postId]: (currentAnalytics.likes[postId] || 0) + 1
+        }
       }
-    }))
+    })
   }
 
   // Track share
   const trackShare = (postId: string) => {
-    setAnalytics(prev => ({
-      ...prev,
-      shares: {
-        ...prev.shares,
-        [postId]: (prev.shares[postId] || 0) + 1
+    setAnalytics(prev => {
+      const currentAnalytics = getAnalyticsWithDefaults(prev)
+      return {
+        ...currentAnalytics,
+        shares: {
+          ...currentAnalytics.shares,
+          [postId]: (currentAnalytics.shares[postId] || 0) + 1
+        }
       }
-    }))
+    })
   }
 
   // Track tag popularity
   const trackTagViews = (tags: string[]) => {
     setAnalytics(prev => {
-      const newPopularTags = { ...prev.popularTags }
+      const currentAnalytics = getAnalyticsWithDefaults(prev)
+      const newPopularTags = { ...currentAnalytics.popularTags }
       tags.forEach(tag => {
         newPopularTags[tag] = (newPopularTags[tag] || 0) + 1
       })
       return {
-        ...prev,
+        ...currentAnalytics,
         popularTags: newPopularTags
       }
     })
@@ -114,6 +147,24 @@ export function useBlogAnalytics() {
 
   // Computed analytics
   const computedAnalytics = useMemo(() => {
+    if (!analytics) {
+      return {
+        totalViews: 0,
+        totalLikes: 0,
+        totalShares: 0,
+        popularPosts: [],
+        popularTags: [],
+        avgReadingTime: {},
+        engagementRate: 0,
+        weeklyTrend: [],
+        userEngagement: {
+          totalSessions: 0,
+          averageSessionTime: 0,
+          bounceRate: 0
+        }
+      }
+    }
+
     const totalViews = Object.values(analytics.views).reduce((sum, views) => sum + views, 0)
     const totalLikes = Object.values(analytics.likes).reduce((sum, likes) => sum + likes, 0)
     const totalShares = Object.values(analytics.shares).reduce((sum, shares) => sum + shares, 0)

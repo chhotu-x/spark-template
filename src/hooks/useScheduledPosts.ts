@@ -12,6 +12,8 @@ export function useScheduledPosts() {
   useEffect(() => {
     const checkScheduledPosts = () => {
       setPosts(currentPosts => {
+        if (!currentPosts) return []
+        
         const now = new Date()
         const postsToPublish = currentPosts.filter(post => 
           post.status === 'scheduled' && 

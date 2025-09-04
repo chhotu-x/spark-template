@@ -58,9 +58,9 @@ export interface PerformanceMetrics {
   pageLoadTime: number
   renderTime: number
   interactionLatency: number
-  memoryUsage?: number
-  componentRenderCount?: number
-  lastInteraction?: number
+  memoryUsage: number
+  componentRenderCount: number
+  lastInteraction: number
 }
 
 export interface CacheEntry<T> {

@@ -9,13 +9,12 @@ import { Calendar } from '@/components/ui/calendar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAdvancedSearch } from '@/hooks/useAdvancedSearch'
 import { 
-  Search, 
-  Filter, 
+  MagnifyingGlass, 
+  Funnel, 
   X, 
   CalendarBlank, 
   SortAscending,
-  SortDescending,
-  Funnel
+  SortDescending
 } from '@phosphor-icons/react'
 
 interface SearchFiltersProps {
@@ -81,7 +80,7 @@ export default function AdvancedSearchFilters({
       {/* Search Bar */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search posts by title, content, or tags..."
             className="pl-10"
@@ -92,7 +91,7 @@ export default function AdvancedSearchFilters({
         <Popover open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
+              <Funnel className="h-4 w-4" />
               Filters
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">

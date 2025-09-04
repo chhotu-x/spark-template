@@ -11,10 +11,10 @@ import {
   BookOpen, 
   Target, 
   Lightbulb, 
-  TrendingUp, 
+  TrendUp, 
   CheckCircle,
-  AlertTriangle,
-  Sparkles,
+  Warning,
+  Sparkle,
   Clock
 } from '@phosphor-icons/react'
 
@@ -155,7 +155,7 @@ export default function ContentEditorInsights({
 
         <Card className="p-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendUp className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Readability</span>
           </div>
           <div className={`text-2xl font-bold mt-1 ${getScoreColor(analysis.readabilityScore)}`}>
@@ -287,7 +287,7 @@ export default function ContentEditorInsights({
               <div className="space-y-3">
                 {analysis.suggestions.map((suggestion, index) => (
                   <Alert key={index}>
-                    <AlertTriangle className="h-4 w-4" />
+                    <Warning className="h-4 w-4" />
                     <AlertDescription className="text-sm">
                       {suggestion}
                     </AlertDescription>
@@ -308,7 +308,7 @@ export default function ContentEditorInsights({
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
+                <Sparkle className="h-4 w-4" />
                 AI-Powered Insights
                 {isGeneratingAI && (
                   <div className="ml-2 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -391,7 +391,7 @@ export default function ContentEditorInsights({
                     variant="outline"
                     className="gap-2"
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkle className="h-4 w-4" />
                     Generate AI Insights
                   </Button>
                 </div>

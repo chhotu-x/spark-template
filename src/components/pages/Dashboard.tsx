@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PenTool, Eye, Users, Globe, Clock } from '@phosphor-icons/react'
+import { Pen, Eye, Users, Globe, Clock } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { Badge } from '@/components/ui/badge'
 import type { Page, NavigationProps, BlogPost } from '@/lib/types'
@@ -9,22 +9,22 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
   const [posts] = useKV<BlogPost[]>('blog-posts', [])
   const [profile] = useKV<any>('user-profile', null)
 
-  const publishedPosts = posts.filter(post => post.status === 'published').length
-  const draftPosts = posts.filter(post => post.status === 'draft').length
-  const scheduledPosts = posts.filter(post => post.status === 'scheduled').length
-  const recentPosts = posts.slice(-3).reverse()
+  const publishedPosts = posts?.filter(post => post.status === 'published').length || 0
+  const draftPosts = posts?.filter(post => post.status === 'draft').length || 0
+  const scheduledPosts = posts?.filter(post => post.status === 'scheduled').length || 0
+  const recentPosts = posts?.slice(-3).reverse() || []
 
   // Get next scheduled post
   const nextScheduledPost = posts
-    .filter(post => post.status === 'scheduled' && post.scheduledAt)
-    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0]
+    ?.filter(post => post.status === 'scheduled' && post.scheduledAt)
+    .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime())[0]
 
   const stats = [
     {
       title: 'Total Posts',
-      value: posts.length,
+      value: posts?.length || 0,
       description: 'All blog posts created',
-      icon: PenTool,
+      icon: Pen,
       color: 'text-primary',
       action: () => onNavigate('blog')
     },
@@ -48,7 +48,7 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
       title: 'Drafts',
       value: draftPosts,
       description: 'Work in progress',
-      icon: PenTool,
+      icon: Pen,
       color: 'text-muted-foreground',
       action: () => onNavigate('blog')
     }
@@ -131,7 +131,7 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <PenTool size={48} className="text-muted-foreground mx-auto mb-4" />
+                  <Pen size={48} className="text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">No blog posts yet</p>
                   <Button onClick={() => onNavigate('blog')}>
                     Write your first post
@@ -168,8 +168,8 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
                     <div className="flex items-center gap-2 text-sm text-accent">
                       <Clock size={14} />
                       <span>
-                        {new Date(nextScheduledPost.scheduledAt).toLocaleDateString()} at{' '}
-                        {new Date(nextScheduledPost.scheduledAt).toLocaleTimeString()}
+                        {new Date(nextScheduledPost.scheduledAt!).toLocaleDateString()} at{' '}
+                        {new Date(nextScheduledPost.scheduledAt!).toLocaleTimeString()}
                       </span>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-3">
-                    <PenTool size={20} className="text-muted-foreground" />
+                    <Pen size={20} className="text-muted-foreground" />
                     <span className="font-medium">Drafts</span>
                   </div>
                   <Badge variant="secondary">{draftPosts}</Badge>
@@ -254,7 +254,7 @@ export default function Dashboard({ onNavigate }: NavigationProps) {
                   className="h-16 flex-col gap-2"
                   onClick={() => onNavigate('blog')}
                 >
-                  <PenTool size={24} />
+                  <Pen size={24} />
                   <span>Write Post</span>
                 </Button>
                 <Button 
