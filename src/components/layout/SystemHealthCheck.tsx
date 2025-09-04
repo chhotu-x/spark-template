@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from '@phosphor-icons/react'
+import { CheckCircle, XCircle, Warning, ArrowClockwise } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { usePerformance } from '@/hooks/usePerformance'
 import { useBlogAnalytics } from '@/hooks/useBlogAnalytics'
@@ -20,7 +20,7 @@ interface HealthCheck {
 export default function SystemHealthCheck() {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([])
   const [isVisible, setIsVisible] = useState(false)
-  const [posts] = useKV('blog-posts', [])
+  const [posts] = useKV<any[]>('blog-posts', [])
   const { metrics, cacheSize } = usePerformance()
   const { analytics } = useBlogAnalytics()
 
@@ -33,7 +33,7 @@ export default function SystemHealthCheck() {
       checks.push({
         name: 'KV Storage',
         status: 'healthy',
-        message: `${posts.length} posts stored successfully`,
+        message: `${posts?.length || 0} posts stored successfully`,
         lastChecked: now
       })
     } catch (error) {
@@ -46,23 +46,23 @@ export default function SystemHealthCheck() {
     }
 
     // Check performance metrics
-    const performanceStatus = 
+    const performanceStatus = !metrics ? 'warning' :
       metrics.pageLoadTime > 3000 ? 'error' :
       metrics.pageLoadTime > 1500 ? 'warning' : 'healthy'
     
     checks.push({
       name: 'Performance',
       status: performanceStatus,
-      message: `Load time: ${Math.round(metrics.pageLoadTime)}ms, Cache: ${cacheSize} entries`,
+      message: `Load time: ${Math.round(metrics?.pageLoadTime || 0)}ms, Cache: ${cacheSize} entries`,
       lastChecked: now
     })
 
     // Check analytics
-    const totalViews = Object.values(analytics.views).reduce((sum: number, views) => sum + views, 0)
+    const totalViews = analytics ? Object.values(analytics.views).reduce((sum: number, views) => sum + views, 0) : 0
     checks.push({
       name: 'Analytics',
       status: 'healthy',
-      message: `Tracking ${totalViews} total views across ${Object.keys(analytics.views).length} posts`,
+      message: `Tracking ${totalViews} total views across ${analytics ? Object.keys(analytics.views).length : 0} posts`,
       lastChecked: now
     })
 
@@ -111,7 +111,7 @@ export default function SystemHealthCheck() {
   const getStatusIcon = (status: HealthCheck['status']) => {
     switch (status) {
       case 'healthy': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      case 'warning': return <Warning className="h-4 w-4 text-yellow-500" />
       case 'error': return <XCircle className="h-4 w-4 text-red-500" />
     }
   }
@@ -159,7 +159,7 @@ export default function SystemHealthCheck() {
                   onClick={runHealthChecks}
                   className="h-6 w-6 p-0"
                 >
-                  <RefreshCw className="h-3 w-3" />
+                  <ArrowClockwise className="h-3 w-3" />
                 </Button>
                 <Button
                   size="sm"

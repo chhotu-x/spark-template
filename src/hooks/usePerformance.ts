@@ -10,7 +10,9 @@ export function usePerformance() {
     pageLoadTime: 0,
     renderTime: 0,
     interactionLatency: 0,
-    componentRenderCount: 0
+    memoryUsage: 0,
+    componentRenderCount: 0,
+    lastInteraction: 0
   })
 
   // Cache for expensive operations with LRU eviction
@@ -22,7 +24,17 @@ export function usePerformance() {
   // Track component renders
   useEffect(() => {
     renderCountRef.current++
-    setMetrics(prev => ({ ...prev, componentRenderCount: renderCountRef.current }))
+    setMetrics(prev => {
+      const currentMetrics = prev || {
+        pageLoadTime: 0,
+        renderTime: 0,
+        interactionLatency: 0,
+        memoryUsage: 0,
+        componentRenderCount: 0,
+        lastInteraction: 0
+      }
+      return { ...currentMetrics, componentRenderCount: renderCountRef.current }
+    })
   })
 
   // Performance monitoring with cleanup
@@ -33,11 +45,31 @@ export function usePerformance() {
     // Measure page load time
     if (document.readyState === 'complete') {
       const loadTime = performance.now()
-      setMetrics(prev => ({ ...prev, pageLoadTime: loadTime }))
+      setMetrics(prev => {
+        const currentMetrics = prev || {
+          pageLoadTime: 0,
+          renderTime: 0,
+          interactionLatency: 0,
+          memoryUsage: 0,
+          componentRenderCount: 0,
+          lastInteraction: 0
+        }
+        return { ...currentMetrics, pageLoadTime: loadTime }
+      })
     } else {
       loadHandler = () => {
         const loadTime = performance.now()
-        setMetrics(prev => ({ ...prev, pageLoadTime: loadTime }))
+        setMetrics(prev => {
+          const currentMetrics = prev || {
+            pageLoadTime: 0,
+            renderTime: 0,
+            interactionLatency: 0,
+            memoryUsage: 0,
+            componentRenderCount: 0,
+            lastInteraction: 0
+          }
+          return { ...currentMetrics, pageLoadTime: loadTime }
+        })
       }
       window.addEventListener('load', loadHandler)
     }
@@ -45,17 +77,47 @@ export function usePerformance() {
     // Measure render time
     requestAnimationFrame(() => {
       const renderTime = performance.now() - startTime
-      setMetrics(prev => ({ ...prev, renderTime }))
+      setMetrics(prev => {
+        const currentMetrics = prev || {
+          pageLoadTime: 0,
+          renderTime: 0,
+          interactionLatency: 0,
+          memoryUsage: 0,
+          componentRenderCount: 0,
+          lastInteraction: 0
+        }
+        return { ...currentMetrics, renderTime }
+      })
     })
 
     // Memory usage monitoring with fallback
     const updateMemory = () => {
       if ('memory' in performance) {
         const memoryInfo = (performance as any).memory
-        setMetrics(prev => ({ 
-          ...prev, 
-          memoryUsage: memoryInfo.usedJSHeapSize 
-        }))
+        setMetrics(prev => {
+          const currentMetrics = prev || {
+            pageLoadTime: 0,
+            renderTime: 0,
+            interactionLatency: 0,
+            memoryUsage: 0,
+            componentRenderCount: 0,
+            lastInteraction: 0
+          }
+          return { ...currentMetrics, memoryUsage: memoryInfo.usedJSHeapSize }
+        })
+      } else {
+        // Fallback if memory API not available
+        setMetrics(prev => {
+          const currentMetrics = prev || {
+            pageLoadTime: 0,
+            renderTime: 0,
+            interactionLatency: 0,
+            memoryUsage: 0,
+            componentRenderCount: 0,
+            lastInteraction: 0
+          }
+          return { ...currentMetrics, memoryUsage: 0 }
+        })
       }
     }
     updateMemory()
@@ -63,7 +125,17 @@ export function usePerformance() {
 
     // Interaction latency tracking
     const trackInteraction = () => {
-      setMetrics(prev => ({ ...prev, lastInteraction: performance.now() }))
+      setMetrics(prev => {
+        const currentMetrics = prev || {
+          pageLoadTime: 0,
+          renderTime: 0,
+          interactionLatency: 0,
+          memoryUsage: 0,
+          componentRenderCount: 0,
+          lastInteraction: 0
+        }
+        return { ...currentMetrics, lastInteraction: performance.now() }
+      })
     }
     document.addEventListener('click', trackInteraction)
     document.addEventListener('keydown', trackInteraction)

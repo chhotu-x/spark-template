@@ -9,7 +9,7 @@ import Profile from '@/components/pages/Profile'
 import PublicBlog from '@/components/pages/PublicBlog'
 import AnalyticsDashboard from '@/components/pages/AnalyticsDashboard'
 import Dashboard from '@/components/pages/Dashboard'
-import { Menu } from '@phosphor-icons/react'
+import { List } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useScheduledPosts } from '@/hooks/useScheduledPosts'
@@ -136,7 +136,7 @@ function App() {
             onClick={() => setSidebarOpen(true)}
             className="p-2"
           >
-            <Menu size={20} />
+            <List size={20} />
           </Button>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">

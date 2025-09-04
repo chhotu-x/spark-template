@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { usePerformance } from '@/hooks/usePerformance'
 import { 
-  Zap, 
+  Lightning, 
   Clock, 
   Database, 
   Cpu, 
   Activity,
-  TrendingUp,
-  AlertTriangle,
+  TrendUp,
+  Warning,
   CheckCircle
 } from '@phosphor-icons/react'
 
@@ -23,15 +23,15 @@ export default function PerformanceMonitor() {
   const [isVisible, setIsVisible] = useState(false)
   const [memoryTrend, setMemoryTrend] = useState<number[]>([])
 
-  // Track memory usage over time
+  // Track memory usage over time with null safety
   useEffect(() => {
-    if (metrics.memoryUsage) {
+    if (metrics && metrics.memoryUsage > 0) {
       setMemoryTrend(prev => {
-        const newTrend = [...prev, metrics.memoryUsage!]
+        const newTrend = [...prev, metrics.memoryUsage]
         return newTrend.slice(-10) // Keep last 10 measurements
       })
     }
-  }, [metrics.memoryUsage])
+  }, [metrics?.memoryUsage])
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B'
@@ -49,10 +49,12 @@ export default function PerformanceMonitor() {
   const getPerformanceStatus = () => {
     const issues: string[] = []
     
+    if (!metrics) return { status: 'good' as const, issues: [] }
+    
     if (metrics.pageLoadTime > 3000) issues.push('Slow page load')
     if (metrics.renderTime > 100) issues.push('Slow render')
     if (cacheSize > 50) issues.push('High cache usage')
-    if (metrics.memoryUsage && metrics.memoryUsage > 50 * 1024 * 1024) issues.push('High memory usage')
+    if (metrics.memoryUsage > 50 * 1024 * 1024) issues.push('High memory usage')
     
     return {
       status: issues.length === 0 ? 'good' : issues.length < 3 ? 'warning' : 'error',
@@ -87,7 +89,7 @@ export default function PerformanceMonitor() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4" />
+              <Lightning className="h-4 w-4" />
               Performance Monitor
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -95,10 +97,10 @@ export default function PerformanceMonitor() {
                 <CheckCircle className="h-4 w-4 text-green-500" />
               )}
               {performanceStatus.status === 'warning' && (
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                <Warning className="h-4 w-4 text-yellow-500" />
               )}
               {performanceStatus.status === 'error' && (
-                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <Warning className="h-4 w-4 text-red-500" />
               )}
               <Button
                 size="sm"
@@ -122,10 +124,10 @@ export default function PerformanceMonitor() {
                 <Clock className="h-3 w-3 text-muted-foreground" />
                 <span>Page Load</span>
               </div>
-              <span className="font-mono">{formatTime(metrics.pageLoadTime)}</span>
+              <span className="font-mono">{formatTime(metrics?.pageLoadTime || 0)}</span>
             </div>
             <Progress 
-              value={Math.min((metrics.pageLoadTime / 3000) * 100, 100)} 
+              value={Math.min(((metrics?.pageLoadTime || 0) / 3000) * 100, 100)} 
               className="h-1"
             />
 
@@ -134,10 +136,10 @@ export default function PerformanceMonitor() {
                 <Cpu className="h-3 w-3 text-muted-foreground" />
                 <span>Render Time</span>
               </div>
-              <span className="font-mono">{formatTime(metrics.renderTime)}</span>
+              <span className="font-mono">{formatTime(metrics?.renderTime || 0)}</span>
             </div>
             <Progress 
-              value={Math.min((metrics.renderTime / 100) * 100, 100)} 
+              value={Math.min(((metrics?.renderTime || 0) / 100) * 100, 100)} 
               className="h-1"
             />
 
@@ -153,11 +155,11 @@ export default function PerformanceMonitor() {
               className="h-1"
             />
 
-            {metrics.memoryUsage && (
+            {metrics && metrics.memoryUsage > 0 && (
               <>
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-3 w-3 text-muted-foreground" />
+                    <TrendUp className="h-3 w-3 text-muted-foreground" />
                     <span>Memory Usage</span>
                   </div>
                   <span className="font-mono">{formatBytes(metrics.memoryUsage)}</span>
